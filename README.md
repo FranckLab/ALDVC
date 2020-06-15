@@ -1,2 +1,30 @@
 # ALDVC
-Adaptive Lagrangian Digital Volume Correlation  - volumetric displacement and strain measurement based on a hybrid local-global approach
+Augmented Lagrangian Digital Volume Correlation  - volumetric displacement and strain measurement based on a hybrid local-global approach
+ALDVC is a fast, parallel-computing hybrid DIC algorithm, which combines advantages of local subset DIC method (fast computation speed, and parallel computing) and finite-element-based global DIC method (guarantee global kinematic compatibility and decrease noise).  
+
+## Advantages of AL-DIC algorithm
+* [1] It’s a fast algorithm using distributed parallel computing.  
+* [2]	Global kinematic compatibility is added as a global constraint in the form of augmented Lagrangian, and solved using Alternating Direction Method of Multipliers scheme.
+* [3]	Both displacement fields and affine deformation gradients are correlated at the same time.
+* [4]	No need of much manual experience about choosing displacement smoothing filters.
+* [5]	It works well with compressed DIC images and adaptive mesh. See our paper: Yang, J. & Bhattacharya, K. Exp Mech (2019). https://doi.org/10.1007/s11340-018-00459-y;
+* [6]	Being able to compute image sequence with multiple image frames, which is especially quite useful for measuring very large deformations.
+
+## Prerequisites & Installation
+ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single thread and parallel computing features are included in ALDVC code. Please download and unzip the code to the MATLAB working path. Then, execute the mail file main_ALDVC.m.
+
+## Citation
+[1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
+* Full text can be requested at: https://www.researchgate.net/publication/342182706_Augmented_Lagrangian_Digital_Volume_Correlation
+
+## Contact and support
+Email: aldicdvc@gmail.com;  Or  jyang526@wisc.edu;  cfranck@wisc.edu
+
+##
+ 
+<p align="center">
+  <img width="538" height="301" src="https://github.com/jyang526843/2D_ALDIC_v3/blob/master/logo_aldic.png">
+</p>
+
+
+
