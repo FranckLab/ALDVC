@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge,IE=9,chrome=1"><meta name="generator" content="MATLAB R2018b"><title>Iterative Solver Example</title><style type="text/css">.rtcContent { padding: 30px; } .S0 { margin: 3px 10px 5px 4px; padding: 0px; line-height: 28.8px; min-height: 0px; white-space: pre-wrap; color: rgb(213, 80, 0); font-family: Helvetica, Arial, sans-serif; font-style: normal; font-size: 24px; font-weight: 400; text-align: left;  }
+.CodeBlock { background-color: #F7F7F7; margin: 10px 0 10px 0;}
+.S1 { border-left: 1px solid rgb(233, 233, 233); border-right: 1px solid rgb(233, 233, 233); border-top: 1px solid rgb(233, 233, 233); border-bottom: 1px solid rgb(233, 233, 233); border-radius: 4px; padding: 6px 45px 4px 13px; line-height: 17.234px; min-height: 18px; white-space: nowrap; color: rgb(0, 0, 0); font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px;  }
+.S2 { margin: 3px 10px 5px 4px; padding: 0px; line-height: 20px; min-height: 0px; white-space: pre-wrap; color: rgb(60, 60, 60); font-family: Helvetica, Arial, sans-serif; font-style: normal; font-size: 20px; font-weight: 700; text-align: left;  }
+.S3 { margin: 2px 10px 9px 4px; padding: 0px; line-height: 21px; min-height: 0px; white-space: pre-wrap; color: rgb(0, 0, 0); font-family: Helvetica, Arial, sans-serif; font-style: normal; font-size: 14px; font-weight: 400; text-align: left;  }
+.S4 { border-left: 1px solid rgb(233, 233, 233); border-right: 1px solid rgb(233, 233, 233); border-top: 1px solid rgb(233, 233, 233); border-bottom: 0px none rgb(0, 0, 0); border-radius: 4px 4px 0px 0px; padding: 6px 45px 0px 13px; line-height: 17.234px; min-height: 18px; white-space: nowrap; color: rgb(0, 0, 0); font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px;  }
+.S5 { border-left: 1px solid rgb(233, 233, 233); border-right: 1px solid rgb(233, 233, 233); border-top: 0px none rgb(0, 0, 0); border-bottom: 0px none rgb(0, 0, 0); border-radius: 0px; padding: 0px 45px 0px 13px; line-height: 17.234px; min-height: 18px; white-space: nowrap; color: rgb(0, 0, 0); font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px;  }
+.S6 { border-left: 1px solid rgb(233, 233, 233); border-right: 1px solid rgb(233, 233, 233); border-top: 0px none rgb(0, 0, 0); border-bottom: 1px solid rgb(233, 233, 233); border-radius: 0px 0px 4px 4px; padding: 0px 45px 4px 13px; line-height: 17.234px; min-height: 18px; white-space: nowrap; color: rgb(0, 0, 0); font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px;  }
+.S7 { border-left: 1px solid rgb(233, 233, 233); border-right: 1px solid rgb(233, 233, 233); border-top: 0px none rgb(0, 0, 0); border-bottom: 1px solid rgb(233, 233, 233); border-radius: 0px; padding: 0px 45px 4px 13px; line-height: 17.234px; min-height: 18px; white-space: nowrap; color: rgb(0, 0, 0); font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px;  }
+.S8 { color: rgb(64, 64, 64); padding: 10px 0px 6px 17px; background: rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box; font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 14px; overflow-x: hidden; line-height: 17.234px;  }
+.embeddedOutputsErrorElement {min-height: 18px; max-height: 250px; overflow: auto;}
+.embeddedOutputsErrorElement.inlineElement {}
+.embeddedOutputsErrorElement.rightPaneElement {}
+.embeddedOutputsWarningElement{min-height: 18px; max-height: 250px; overflow: auto;}
+.embeddedOutputsWarningElement.inlineElement {}
+.embeddedOutputsWarningElement.rightPaneElement {}
+.diagnosticMessage-wrapper {font-family: Menlo, Monaco, Consolas, "Courier New", monospace; font-size: 12px;}
+.diagnosticMessage-wrapper.diagnosticMessage-warningType {color: rgb(255,100,0);}
+.diagnosticMessage-wrapper.diagnosticMessage-warningType a {color: rgb(255,100,0); text-decoration: underline;}
+.diagnosticMessage-wrapper.diagnosticMessage-errorType {color: rgb(230,0,0);}
+.diagnosticMessage-wrapper.diagnosticMessage-errorType a {color: rgb(230,0,0); text-decoration: underline;}
+.diagnosticMessage-wrapper .diagnosticMessage-messagePart {white-space: pre-wrap;}
+.diagnosticMessage-wrapper .diagnosticMessage-stackPart {white-space: pre;}
+.embeddedOutputsTextElement,.embeddedOutputsVariableStringElement {white-space: pre; word-wrap: initial; min-height: 18px; max-height: 250px; overflow: auto;}
+.textElement,.rtcDataTipElement .textElement {padding-top: 3px;}
+.embeddedOutputsTextElement.inlineElement,.embeddedOutputsVariableStringElement.inlineElement {}
+.inlineElement .textElement {}
+.embeddedOutputsTextElement.rightPaneElement,.embeddedOutputsVariableStringElement.rightPaneElement {min-height: 16px;}
+.rightPaneElement .textElement {padding-top: 2px; padding-left: 9px;}</style></head><body><div class = rtcContent><h1  class = 'S0'><span>Iterative Solver Example</span></h1><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S1'><span style="white-space: pre;"><span>clc; clear; close </span><span style="color: rgb(160, 32, 240);">all</span><span>;</span></span></div></div></div><h2  class = 'S2'><span>Data Description</span></h2><div  class = 'S3'><span>This is a 5d example. The number of points in the grid is 117,600. This means that the rank of the linear system equations solved is 117,600. I would classify this as a medium size problem. In my experiments, MATLAB is using 3500MB of RAM at just before regularizeNd tries to solve the system of linear equations. The direct solvers ('\' and 'normal') both fail because of a bug in MATLAB 2016b x64. It turns out this is a bug in the underlying libraries. With the same A and b matrices in the Julia Language, I get the same errors. Therefore, the direct solvers are just not usuable currently with this problem. In future versions of MATLAB, I would expect this gets fixed but who knows when. I wrote this on 2017-Nov-17.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S1'><span style="white-space: pre;"><span>load(</span><span style="color: rgb(160, 32, 240);">'Iterative Solver Data.mat'</span><span>);</span></span></div></div></div><h2  class = 'S2'><span>Try the Direct Solvers</span></h2><div  class = 'S3'><span>The direct solver no longer run out of memory as of 2018b but instead lock up the computer! 2019-Jan-15. This is bad. Therefore, the code is commented out. </span></div><div  class = 'S3'><span></span></div><div  class = 'S3'><span>Try the 'normal' solver. This will throw an error as of MATLAB 2016b x64. In future versions of MATLAB, this error may or may not be an error.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S4'><span style="white-space: pre;"><span>smoothness = [0.001 0.01 0.01 0.001 0.01];</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% try</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     tic;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     [~] = regularizeNd(inputs, output, xGrid, smoothness);</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     % Note this call is the same as</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     % yGrid = regularizeNd(inputs, output, xGrid, smoothness,'linear', 'normal');</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     </span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     fprintf('No error thrown. Mathworks fixed this bug.\n');</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     toc;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% catch exception</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%    fprintf(['While using the ''normal'' solver in regularizeNd,\n' ...</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%        'MATLAB threw the following error:\n%s\n%s\n\n'], exception.identifier, exception.message);</span></span></div></div><div class="inlineWrapper"><div  class = 'S6'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% end</span></span></div></div></div><div  class = 'S3'><span>Try the '\' solver. This will throw an error as of MATLAB 2016b x64. In future versions of MATLAB, this error may or may not be an error.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S4'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% try</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     tic;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     [~] = regularizeNd(inputs, output, xGrid, smoothness,[],'\');</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     % Note this call is the same as</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     % yGrid = regularizeNd(inputs, output, xGrid, smoothness,'linear', '\');</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     </span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     fprintf('No error thrown. Mathworks fixed this bug.\n');</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%     toc;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% catch exception</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%       fprintf(['While using the ''\\'' solver in regularizeNd,\n' ...</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">%        'MATLAB threw the following error:\n%s\n%s\n'], exception.identifier, exception.message);</span></span></div></div><div class="inlineWrapper"><div  class = 'S6'><span style="white-space: pre;"><span style="color: rgb(34, 139, 34);">% end</span></span></div></div></div><h2  class = 'S2'><span>Try the Iterative Solvers</span></h2><div  class = 'S3'><span>Solve using the 'pcg' solver. The pcg solver solves the normal equation iteratively for x, (A'*A)*x = A'*b. Note that the condition number of (A'*A) is square of the condition number of A. This means that solving the problem is more numerically unstable than solving A*x = b in the least squares sense. However, regularizeNd generally produces well conditioned matrices so this issue is most often irrelevant. If you need an iterative solver and are struggling with accuracy, try 'lsqr'.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S4'><span style="white-space: pre;"><span>tic;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span>[~] = regularizeNd(inputs, output, xGrid, smoothness,[], </span><span style="color: rgb(160, 32, 240);">'pcg'</span><span>);</span></span></div></div><div class="inlineWrapper outputs"><div  class = 'S7'><span style="white-space: pre;"><span>toc;</span></span></div><div  class = 'S8'><div class="inlineElement eoOutputWrapper embeddedOutputsTextElement" uid="BEE105D3" data-scroll-top="null" data-scroll-left="null" data-width="418" data-height="18" data-hashorizontaloverflow="false" data-testid="output_0" style="max-height: 261px; width: 448px;"><div class="textElement">Elapsed time is 50.533625 seconds.</div></div></div></div></div><div  class = 'S3'><span>Solving using the 'symmlq' solver. The symmlq solver is very similar to the pcg solver; see the MATLAB documentation to see the similarities. The similarities between the solvers are beyond the scope of this example. The symmlq solver solves the normal equation iteratively for x, (A'*A)*x = A'*b.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S4'><span style="white-space: pre;"><span>tic;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span>[~] = regularizeNd(inputs, output, xGrid, smoothness, [], </span><span style="color: rgb(160, 32, 240);">'symmlq'</span><span>);</span></span></div></div><div class="inlineWrapper outputs"><div  class = 'S7'><span style="white-space: pre;"><span>toc;</span></span></div><div  class = 'S8'><div class="inlineElement eoOutputWrapper embeddedOutputsTextElement" uid="2DBCF467" data-scroll-top="null" data-scroll-left="null" data-width="418" data-height="18" data-hashorizontaloverflow="false" data-testid="output_1" style="max-height: 261px; width: 448px;"><div class="textElement">Elapsed time is 49.349756 seconds.</div></div></div></div></div><div  class = 'S3'><span>Solving using the 'lsqr' solver. The lsqr solver solves A*x = b in the least squares sense iteratively. Use this solver as a last resort with regularizeNd. There is probably a rare case where '\' and 'normal' fail, and 'pcg' and 'symmlq' do not produce adequate results. Thus, lsqr would be the last resort and may produce adequately accurate results at the cost of long solve times.</span></div><div class="CodeBlock"><div class="inlineWrapper"><div  class = 'S4'><span style="white-space: pre;"><span>tic;</span></span></div></div><div class="inlineWrapper"><div  class = 'S5'><span style="white-space: pre;"><span>[~] = regularizeNd(inputs, output, xGrid, smoothness, [], </span><span style="color: rgb(160, 32, 240);">'lsqr'</span><span>);</span></span></div></div><div class="inlineWrapper outputs"><div  class = 'S7'><span style="white-space: pre;"><span>toc;</span></span></div><div  class = 'S8'><div class="inlineElement eoOutputWrapper embeddedOutputsTextElement" uid="56316619" data-scroll-top="null" data-scroll-left="null" data-width="418" data-height="18" data-hashorizontaloverflow="false" data-testid="output_2" style="max-height: 261px; width: 448px;"><div class="textElement">Elapsed time is 627.751524 seconds.</div></div></div></div></div></div><br>
+<!-- 
+##### SOURCE BEGIN #####
+%% Iterative Solver Example
+
+clc; clear; close all;
+%% Data Description
+% This is a 5d example. The number of points in the grid is 117,600. This means 
+% that the rank of the linear system equations solved is 117,600. I would classify 
+% this as a medium size problem. In my experiments, MATLAB is using 3500MB of 
+% RAM at just before regularizeNd tries to solve the system of linear equations. 
+% The direct solvers ('\' and 'normal') both fail because of a bug in MATLAB 2016b 
+% x64. It turns out this is a bug in the underlying libraries. With the same A 
+% and b matrices in the Julia Language, I get the same errors. Therefore, the 
+% direct solvers are just not usuable currently with this problem. In future versions 
+% of MATLAB, I would expect this gets fixed but who knows when. I wrote this on 
+% 2017-Nov-17.
+
+load('Iterative Solver Data.mat');
+%% Try the Direct Solvers
+% The direct solver no longer run out of memory as of 2018b but instead lock 
+% up the computer! 2019-Jan-15. This is bad. Therefore, the code is commented 
+% out. 
+% 
+% 
+% 
+% Try the 'normal' solver. This will throw an error as of MATLAB 2016b x64. 
+% In future versions of MATLAB, this error may or may not be an error.
+
+smoothness = [0.001 0.01 0.01 0.001 0.01];
+
+% try
+%     tic;
+%     [~] = regularizeNd(inputs, output, xGrid, smoothness);
+%     % Note this call is the same as
+%     % yGrid = regularizeNd(inputs, output, xGrid, smoothness,'linear', 'normal');
+%     
+%     fprintf('No error thrown. Mathworks fixed this bug.\n');
+%     toc;
+% catch exception
+%    fprintf(['While using the ''normal'' solver in regularizeNd,\n' ...
+%        'MATLAB threw the following error:\n%s\n%s\n\n'], exception.identifier, exception.message);
+% end
+%% 
+% Try the '\' solver. This will throw an error as of MATLAB 2016b x64. In 
+% future versions of MATLAB, this error may or may not be an error.
+
+% try
+%     tic;
+%     [~] = regularizeNd(inputs, output, xGrid, smoothness,[],'\');
+%     % Note this call is the same as
+%     % yGrid = regularizeNd(inputs, output, xGrid, smoothness,'linear', '\');
+%     
+%     fprintf('No error thrown. Mathworks fixed this bug.\n');
+%     toc;
+% catch exception
+%       fprintf(['While using the ''\\'' solver in regularizeNd,\n' ...
+%        'MATLAB threw the following error:\n%s\n%s\n'], exception.identifier, exception.message);
+% end
+%% Try the Iterative Solvers
+% Solve using the 'pcg' solver. The pcg solver solves the normal equation iteratively 
+% for x, (A'*A)*x = A'*b. Note that the condition number of (A'*A) is square of 
+% the condition number of A. This means that solving the problem is more numerically 
+% unstable than solving A*x = b in the least squares sense. However, regularizeNd 
+% generally produces well conditioned matrices so this issue is most often irrelevant. 
+% If you need an iterative solver and are struggling with accuracy, try 'lsqr'.
+
+tic;
+[~] = regularizeNd(inputs, output, xGrid, smoothness,[], 'pcg');
+toc;
+%% 
+% Solving using the 'symmlq' solver. The symmlq solver is very similar to 
+% the pcg solver; see the MATLAB documentation to see the similarities. The similarities 
+% between the solvers are beyond the scope of this example. The symmlq solver 
+% solves the normal equation iteratively for x, (A'*A)*x = A'*b.
+
+tic;
+[~] = regularizeNd(inputs, output, xGrid, smoothness, [], 'symmlq');
+toc;
+%% 
+% Solving using the 'lsqr' solver. The lsqr solver solves A*x = b in the 
+% least squares sense iteratively. Use this solver as a last resort with regularizeNd. 
+% There is probably a rare case where '\' and 'normal' fail, and 'pcg' and 'symmlq' 
+% do not produce adequate results. Thus, lsqr would be the last resort and may 
+% produce adequately accurate results at the cost of long solve times.
+
+tic;
+[~] = regularizeNd(inputs, output, xGrid, smoothness, [], 'lsqr');
+toc;
+##### SOURCE END #####
+--></body></html>
