@@ -18,7 +18,7 @@ ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single t
 * Full text can be requested at: https://www.researchgate.net/publication/342182706_Augmented_Lagrangian_Digital_Volume_Correlation
 
 ## Contact and support
-Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; or Prof. Christian Franck, cfranck@wisc.edu
+Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
 
 ##
  
