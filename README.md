@@ -23,7 +23,7 @@ Email: aldicdvc@gmail.com;  Or  jyang526@wisc.edu;  cfranck@wisc.edu
 ##
  
 <p align="center">
-  <img width="538" height="301" src="https://github.com/jyang526843/2D_ALDIC_v3/blob/master/logo_aldic.png">
+  <img width="538" height="301" src="https://github.com/FranckLab/ALDVC/blob/master/aldvc_logo.png">
 </p>
 
 
