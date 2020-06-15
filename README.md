@@ -7,8 +7,7 @@ ALDVC is a fast, parallel-computing hybrid DIC algorithm, which combines advanta
 * [2]	Global kinematic compatibility is added as a global constraint in the form of augmented Lagrangian, and solved using Alternating Direction Method of Multipliers scheme.
 * [3]	Both displacement fields and affine deformation gradients are correlated at the same time.
 * [4]	No need of much manual experience about choosing displacement smoothing filters.
-* [5]	It works well with compressed DIC images and adaptive mesh. See our paper: Yang, J. & Bhattacharya, K. Exp Mech (2019). https://doi.org/10.1007/s11340-018-00459-y;
-* [6]	Being able to compute image sequence with multiple image frames, which is especially quite useful for measuring very large deformations.
+* [5]	Being able to compute image sequence with multiple image frames, which is especially quite useful for measuring very large deformations.
 
 ## Prerequisites & Installation
 ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single thread and parallel computing features are included in ALDVC code. Please download and unzip the code to the MATLAB working path. Then, execute the mail file main_ALDVC.m.
