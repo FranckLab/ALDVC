@@ -15,10 +15,11 @@ ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single t
 ## Citation
 [1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
 * Full text can be requested at: https://www.researchgate.net/publication/342182706_Augmented_Lagrangian_Digital_Volume_Correlation
-[![View Augmented Lagrangian Digital Volume Correlation (ALDVC) on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/77016-augmented-lagrangian-digital-volume-correlation-aldvc)
 
 ## Contact and support
 Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
+Welcome to give us ratings and make comments at: [![View Augmented Lagrangian Digital Volume Correlation (ALDVC) on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/77016-augmented-lagrangian-digital-volume-correlation-aldvc)
+
 
 ##
 
