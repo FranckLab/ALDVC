@@ -1,8 +1,8 @@
 # ALDVC
 Augmented Lagrangian Digital Volume Correlation  - volumetric displacement and strain measurement based on a hybrid local-global approach
-ALDVC is a fast, parallel-computing hybrid DIC algorithm, which combines advantages of local subset DIC method (fast computation speed, and parallel computing) and finite-element-based global DIC method (guarantee global kinematic compatibility and decrease noise).  
+ALDVC is a fast, parallel-computing hybrid DVC algorithm, which combines advantages of local subset method (fast computation speed, and parallel computing) and finite-element-based global method (guarantee global kinematic compatibility and decrease noise).  
 
-## Advantages of AL-DIC algorithm
+## Advantages of ALDVC algorithm
 * [1] It’s a fast algorithm using distributed parallel computing.  
 * [2]	Global kinematic compatibility is added as a global constraint in the form of augmented Lagrangian, and solved using Alternating Direction Method of Multipliers scheme.
 * [3]	Both displacement fields and affine deformation gradients are correlated at the same time.
