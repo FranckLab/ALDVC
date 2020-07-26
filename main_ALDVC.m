@@ -18,7 +18,7 @@ fprintf('------------ Section 1 Done ------------ \n \n')
 %% Section 2 
 fprintf('------------ Section 2 Start ------------ \n')
 % ====== Read images ======
-filename = 'vol_Sample*.mat'; fileFolder = './DVC_images/';
+filename = 'vol_str*.mat'; fileFolder = './DVC_images/';
 try if isempty(fileFolder)~=1, cd(fileFolder); end; catch; end
 [file_name,Img,DVCpara] = ReadImage3(filename); 
 DVCpara.interpmethod='cubic';  % Grayscale interpolation scheme: choose from {'linear','cubic','spline','default'}
@@ -594,6 +594,16 @@ results_name = ['results_ws',num2str(DVCpara.winsize(1)),'_st',num2str(DVCpara.w
 save(results_name, 'file_name','DVCpara','DVCmesh','ResultDisp','ResultDefGrad','ResultStrain','ResultFEMesh',...
     'ALSub1Time','ALSub2Time','ALSolveStep','Resultmubeta','ResultConvItPerEle', ...
     'ResultcoordinatesFEM','ResultelementsFEM','ResultSizeOfFFTSearchReg');
- 
- 
+
+
+  
+%% %%%%%%%%%%%%% Extensions for body and slice plottings %%%%%%%%%%%%%%%%
+disp('Extensions for body and slice plottings'); pause;  
+plotExt_bodyslice; % Feel free to modify this file (./PlotFiles/plotExt_bodyslice.m) on your purpose.
+
+
+
+
+
+
 
