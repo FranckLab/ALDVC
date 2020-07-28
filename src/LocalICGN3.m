@@ -100,7 +100,7 @@ switch ClusterNo
         Img2Const = parallel.pool.Constant(Img2);
         DfEle = struct(); DfEle.imgSize = Df.imgSize;
          
-        hbar = parfor_progressbar(size(coordinatesFEM,1),'Subproblem 1: Parallel-computing Subproblem 1 IC-GN iterations!');
+        hbar = parfor_progressbar(size(coordinatesFEM,1),'Parallel-computing Subproblem 1 IC-GN iterations!');
         parfor tempj = 1 : size(coordinatesFEM,1)  % tempj is the element index
             
             try 
