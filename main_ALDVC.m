@@ -16,7 +16,7 @@ close all; clear all; clc; clearvars -global
 fprintf('------------ Section 1 Start ------------ \n')
 setenv('MW_MINGW64_LOC','C:\TDM-GCC-64')
 mex -O ba_interp3.cpp; warning('off'); % dbstop if error 
-addpath('./func'); addpath('./src'); addpath('./plotFiles'); addpath('./plotFiles/export_fig-d966721'); addpath('./func/regularizeNd');
+addpath('./func','./src','./plotFiles','./DVC_images','./plotFiles/export_fig-d966721','./func/regularizeNd');
 fprintf('------------ Section 1 Done ------------ \n \n')
 
 
@@ -114,6 +114,8 @@ for ImgSeqNum = 2:length(ImgNormalized)
     disp(['***** Start step',num2str(ALSolveStep),' Subproblem1 *****']);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % DVCpara.interpmethod='cubic';  % Choose from {'linear','cubic','spline','default'}
+    % DVCpara.displayIterOrNot=0; DVCpara.Subpb1ICGNMaxIterNum=100; 
     % ------ Start Local DIC IC-GN iteration ------
     [USubpb1,FSubpb1,HtempPar,ALSub1Timetemp,ConvItPerEletemp] = LocalICGN3( ...
         U0,DVCmesh.coordinatesFEM,Df,Img{1},Img{2},DVCpara,'GaussNewton',DVCpara.ICGNtol);
