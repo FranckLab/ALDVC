@@ -38,11 +38,11 @@ else
     qDICpceRmList = []; 
     qDICppeRmList = [];
 end
-% figure, imagesc3D(qDICpceRmList); caxis auto; colorbar;
+% figure, imagesc3(qDICpceRmList); caxis auto; colorbar;
 % prompt = 'Input threshold for median test:';
 % Thr = input(prompt); % Thr = 50;
 
-% figure, imagesc3D(qDICppeRmList); caxis auto; colorbar;
+% figure, imagesc3(qDICppeRmList); caxis auto; colorbar;
 % prompt = 'Input threshold for median test:';
 % Thr = input(prompt); % Thr = 50;
 % 
@@ -89,7 +89,7 @@ normFluctMag = sqrt(normFluctMag);
 MedFilterOrNot = 0;
 while MedFilterOrNot < 1
     
-    figure, imagesc3D(normFluctMag); caxis auto; colorbar;
+    figure, imagesc3(normFluctMag); caxis auto; colorbar;
     if isempty(Thr0) || (Thr0 == 0) 
         prompt = 'Input threshold for median test (Default value: 2): ';
         Thr = input(prompt);  
@@ -113,9 +113,9 @@ while MedFilterOrNot < 1
     % u2 = inpaint_nans3(u2,1); v2 = inpaint_nans3(v2,1); w2 = inpaint_nans3(w2,1);
     % --------------------------------------
     close all; 
-    figure, imagesc3D(u2); colorbar; title('Displacement u','fontweight','normal');  
-    figure, imagesc3D(v2); colorbar; title('Displacement v','fontweight','normal');  
-    figure, imagesc3D(w2); colorbar; title('Displacement w','fontweight','normal');  
+    figure, imagesc3(u2); colorbar; title('Displacement u','fontweight','normal');  
+    figure, imagesc3(v2); colorbar; title('Displacement v','fontweight','normal');  
+    figure, imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');  
     
     if isempty(Thr0) || (Thr0 == 0) 
         fprintf('Do you want to redo Median test: 0(Yes, redo it!); 1(No, it is good!)  \n');
@@ -175,9 +175,9 @@ while ClearBadInitialPointsOrNot == 0
     % --------------------------------------
      close all;
     % Plotuvw([],u2,v2,w2,x,y,z);
-    figure,imagesc3D(u2); colorbar; title('Displacement u','fontweight','normal');  
-    figure,imagesc3D(v2); colorbar; title('Displacement v','fontweight','normal');  
-    figure,imagesc3D(w2); colorbar; title('Displacement w','fontweight','normal');  
+    figure,imagesc3(u2); colorbar; title('Displacement u','fontweight','normal');  
+    figure,imagesc3(v2); colorbar; title('Displacement v','fontweight','normal');  
+    figure,imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');  
     % --------------------------------------
     
     prompt = 'Do you clear bad points by setting upper/lower bounds? (0-yes; 1-no)';
@@ -253,7 +253,7 @@ while ClearBadInitialPointsOrNotx == 0
             
             close all; figure, surf(u(:,:,tempkk)); colorbar; axis tight; title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
-            %close all; figure, imagesc3D(u ); colorbar; title('Displacement u','fontweight','normal');
+            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
             prompt = 'Do you point out more x-disp bad points? (o-yes; 1-no) Input here: ';
             ClearBadInitialPointsOrNotx = input(prompt);
             
@@ -326,7 +326,7 @@ while ClearBadInitialPointsOrNoty == 0
             
             close all; figure, surf(v(:,:,tempkk)); colorbar; axis tight; title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
-            %close all; figure, imagesc3D(u ); colorbar; title('Displacement u','fontweight','normal');
+            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
             prompt = 'Do you point out more y-disp bad points? (o-yes; 1-no) Input here: ';
             ClearBadInitialPointsOrNoty = input(prompt);
             
@@ -399,7 +399,7 @@ while ClearBadInitialPointsOrNotz == 0
             
             close all; figure, surf(w(:,:,tempkk)); colorbar; axis tight; title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
-            %close all; figure, imagesc3D(u ); colorbar; title('Displacement u','fontweight','normal');
+            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
             prompt = 'Do you point out more z-disp bad points? (o-yes; 1-no) Input here: ';
             ClearBadInitialPointsOrNotz = input(prompt);
             

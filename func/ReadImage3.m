@@ -78,9 +78,9 @@ switch openImgOrNot
         [gridx(1), gridy(1)] = ginput(1); fprintf('xy-coordinates of top-left corner point are (%4.3f,%4.3f)\n',gridx(1), gridy(1))
         [gridx(2), gridy(2)] = ginput(1); fprintf('xy-coordinates of bottom-right corner point are (%4.3f,%4.3f)\n',gridx(2), gridy(2))
         
-        disp('--- Define top and bottom edges in the z-direction ---')
+        disp('--- Define top and bottom edges on the yz-plane ---')
         figure, imshow(squeeze(Img{1}(round(0.5*(1+MNL(1))),:,:))'); 
-        title('Click top and bottom edges in the z-direction','fontweight','normal','fontsize',16);
+        title('Click top and bottom edges on the yz-plane','fontweight','normal','fontsize',16);
         
         [~,gridz(1)] = ginput(1); fprintf('z-coordinate of the top edge is (%4.3f)\n',gridz(1) );
         [~,gridz(2)] = ginput(1); fprintf('z-coordinate of the bottom edge is (%4.3f)\n',gridz(2) );
