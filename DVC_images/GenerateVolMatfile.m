@@ -46,6 +46,7 @@ end
 
 for tempi = 1:length(files)
     f = imread(im{tempi},1);
+    % If it's RGB image, use rgb2gray() function: f = rgb2gray(imread(im{tempi},1));
     voltemp(1:size(f,1),1:size(f,2),tempi) = double(f);
 end
 
