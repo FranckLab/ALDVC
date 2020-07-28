@@ -161,7 +161,7 @@ switch ClusterNo
         % --------------- Start Local ICGN --------------
         %hbar = parfor_progressbar(length(imgSubsetParIndexList),'Part 1: Parallel-computing Subproblem 1 IC-GN iterations!');
         %parfor tempjj = 1:length(imgSubsetParIndexList) 
-        hbar = parfor_progressbar(size(coordinatesFEM,1),'Subproblem 1: Parallel-computing Subproblem 1 IC-GN iterations!');
+        hbar = parfor_progressbar(size(coordinatesFEM,1),'Parallel-computing Subproblem 1 IC-GN iterations!');
         parfor tempjj = 1:size(coordinatesFEM,1)
           
             try
