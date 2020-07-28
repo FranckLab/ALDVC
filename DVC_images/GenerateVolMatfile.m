@@ -36,7 +36,7 @@
 
 %% Add iamge tiff folder path
 clear vol fileName voltemp
-addpath('./vol_stretch_1001_tiff','./PlotFiles/'); 
+addpath('./vol_stretch_1001_tiff','../PlotFiles/'); 
 files = dir('./vol_stretch_1001_tiff/vol_*.tif'); % Use image prefix and extension
 
 im = cell(length(files),1); % Extract image file name
