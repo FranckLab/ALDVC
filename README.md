@@ -18,7 +18,7 @@ https://uwmadison.box.com/s/kr6pjje9yfi9k9va6cbk1ayvhvbs5nvq <p>
 Example results download link: 
 https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
  
-# ****** ATTENTION ******  
+## ****** ATTENTION ******  
 % The "x,y,z" or "1-,2-,3-" coordinates in the ALDVC code always correspond to the 1st, 2nd and 3rd indices of Matlab workspace variable. For example, p_meas(:,1) and p_meas(:,2) are the x- & y-coordinates of scattered points.  
  
 % This is a little different from some MATLAB image processing functions. 
