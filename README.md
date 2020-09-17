@@ -29,7 +29,7 @@ https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
 ## Citation
 If used please cite
 ```bibtex
-@article{,
+@article{Yang2020aldvc,
   title={Augmented Lagrangian Digital Volume Correlation (ALDVC)},
   author={Yang, J. and Hazlett, L. and Landauer, A. K. and Franck, C.},
   journal={Experimental Mechanics},
@@ -39,9 +39,8 @@ If used please cite
   year={2020},
   Url={https://doi.org/10.1007/s11340-020-00607-3}
 }
-}
 ```
-or 
+ 
 [1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
 * Full text can be requested at: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
 
