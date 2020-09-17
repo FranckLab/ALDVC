@@ -42,7 +42,9 @@ If used please cite
 ```
  
 [1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
-* Full text can be requested at: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
+* Full text can be requested at: 
+Exp Mech Website: https://link.springer.com/article/10.1007/s11340-020-00607-3
+ResearchGate: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
 
 ## Contact and support
 Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
