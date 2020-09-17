@@ -12,6 +12,9 @@ ALDVC is a fast, parallel-computing hybrid DVC algorithm, which combines advanta
 ## Prerequisites & Installation
 ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single thread and parallel computing features are included in ALDVC code. Please download and unzip the code to the MATLAB working path. Then, execute the mail file main_ALDVC.m.
 
+## ALDVC code manual
+https://github.com/FranckLab/ALDVC/blob/master/manual.pdf
+
 ## ALDVC example dataset
 Example images download link: 
 https://uwmadison.box.com/s/kr6pjje9yfi9k9va6cbk1ayvhvbs5nvq <p>
@@ -33,19 +36,15 @@ If used please cite
   title={Augmented Lagrangian Digital Volume Correlation (ALDVC)},
   author={Yang, J. and Hazlett, L. and Landauer, A. K. and Franck, C.},
   journal={Experimental Mechanics},
-  volume={},
-  number={},
-  pages={},
   year={2020},
   Url={https://doi.org/10.1007/s11340-020-00607-3}
 }
 ```
  
 [1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
-* Full text can be requested at: 
-Exp Mech Website: https://link.springer.com/article/10.1007/s11340-020-00607-3
-
-ResearchGate: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
+Full text can be requested at: 
+* Exp Mech Website: https://link.springer.com/article/10.1007/s11340-020-00607-3
+* ResearchGate: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
 
 ## Contact and support
 Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
