@@ -1,5 +1,5 @@
-# ALDVC
-Augmented Lagrangian Digital Volume Correlation  - volumetric displacement and strain measurement based on a hybrid local-global approach
+# Augmented Lagrangian Digital Volume Correlation (ALDVC)
+Augmented Lagrangian Digital Volume Correlation, or we call ALDVC, is to measure full-field volumetric displacements and strains based on a hybrid local-global approach.
 ALDVC is a fast, parallel-computing hybrid DVC algorithm, which combines advantages of local subset method (fast computation speed, and parallel computing) and finite-element-based global method (guarantee global kinematic compatibility and decrease noise).  
 
 ## Advantages of ALDVC algorithm
@@ -27,8 +27,23 @@ https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
 % Please pay attention to this.  
 
 ## Citation
+If used please cite
+```bibtex
+@article{,
+  title={Augmented Lagrangian Digital Volume Correlation (ALDVC)},
+  author={Yang, J. and Hazlett, L. and Landauer, A. K. and Franck, C.},
+  journal={Experimental Mechanics},
+  volume={},
+  number={},
+  pages={},
+  year={2020},
+  Url={https://doi.org/10.1007/s11340-020-00607-3}
+}
+}
+```
+or 
 [1] Yang, J. Hazlett, L., Landauer, A. Franck, C. Augmented Lagrangian Digital Volume Correlation. Exp.Mech, 2020.  
-* Full text can be requested at: https://www.researchgate.net/publication/342182706_Augmented_Lagrangian_Digital_Volume_Correlation
+* Full text can be requested at: https://www.researchgate.net/publication/343676441_Augmented_Lagrangian_Digital_Volume_Correlation_ALDVC
 
 ## Contact and support
 Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
