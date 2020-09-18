@@ -34,7 +34,7 @@
 % For more information please contact: Jin Yang, Email: aldicdvc@gmail.com 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Add iamge tiff folder path
+%% Add image tiff folder path
 clear vol fileName voltemp
 addpath('./vol_stretch_1001_tiff','../PlotFiles/'); 
 files = dir('./vol_stretch_1001_tiff/vol_*.tif'); % Use image prefix and extension
