@@ -37,7 +37,9 @@
 %% Add image tiff folder path
 clear vol fileName voltemp
 addpath('./vol_stretch_1001_tiff','../PlotFiles/'); 
-files = dir('./vol_stretch_1001_tiff/vol_*.tif'); % Use image prefix and extension
+
+% TODO:
+files = dir('./vol_stretch_1001_tiff/vol_*.tif'); % Use your image prefix and extension
 
 im = cell(length(files),1); % Extract image file name
 for tempi = 1:length(files)
@@ -45,12 +47,17 @@ for tempi = 1:length(files)
 end
 
 for tempi = 1:length(files)
+
+    % TODO: check whether your images are rgb or grayscale images
     f = imread(im{tempi},1);
     % If it's RGB image, use rgb2gray() function: f = rgb2gray(imread(im{tempi},1));
     voltemp(1:size(f,1),1:size(f,2),tempi) = double(f);
 end
 
+% TODO: change "uint8" to "uint'x'" if your images are 'x'-bit, not 8-bit images.
 vol{1} = uint8(permute(voltemp,[2,1,3]));
+
+% TODO: name a matlab file name to save "vol"
 save 'vol_stretch_1001.mat' vol ;
  
  
