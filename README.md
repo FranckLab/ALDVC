@@ -27,7 +27,7 @@ https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
 % This is a little different from some MATLAB image processing functions. 
 % For example, if a 3D image has size MxNxL, in this code, we always have the image size_x=M, size_y=N, size_z=L. If you use some Matlab computer vision/image post-processing function, for example, 'imagesc3D', or 'imshow3D', or 'surf', it will reads size_x=N, size_y=M, size_z=L. 
  
-% Please pay attention to this.  
+% Please pay attention to this difference.  
 
 ## Citation
 If used please cite
