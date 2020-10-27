@@ -110,7 +110,8 @@ switch paraName
         fprintf('    0: Infinitesimal stran; \n');
         fprintf('    1: Eulerian strain; \n');
         fprintf('    2: Green-Lagrangian strain; \n');
-        fprintf('    3: Others: code by yourself; \n');
+        fprintf('    3: Principal infinitesimal strain; \n');
+        fprintf('    4: Others: code by yourself; \n');
         prompt = 'Input here: ';
         StrainType = input(prompt);
         while (StrainType ~= 0) && (StrainType ~= 1) && (StrainType ~= 2) && (StrainType ~= 3)
@@ -119,7 +120,8 @@ switch paraName
             fprintf('    0: Infinitesimal stran; \n');
             fprintf('    1: Eluerian strain; \n');
             fprintf('    2: Green-Lagrangian strain; \n');
-            fprintf('    3: Others: code by yourself; \n');
+            fprintf('    3: Principal infinitesimal strain; \n');
+            fprintf('    4: Others: code by yourself; \n');
             prompt = 'Input here: ';
             StrainType = input(prompt);
         end
