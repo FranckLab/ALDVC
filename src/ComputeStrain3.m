@@ -118,6 +118,39 @@ for tempi = 1:9:length(FStrain)
             FStraintemp = FStrainFinite(temp3);
             
         case 3
+            tempDU = [dudx, dudy, dudz; dvdx, dvdy, dvdz; dwdx, dwdy, dwdz];
+            tempPrincipalStrain = eig(tempDU);
+            FStrainFinite(tempi) = tempPrincipalStrain(1);
+            FStrainFinite(tempi+1) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
+            FStrainFinite(tempi+2) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
+            FStrainFinite(tempi+3) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
+            FStrainFinite(tempi+4) = tempPrincipalStrain(2);
+            FStrainFinite(tempi+5) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
+            FStrainFinite(tempi+6) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
+            FStrainFinite(tempi+7) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
+            FStrainFinite(tempi+8) = tempPrincipalStrain(3);
+            if tempi == 1 % Only print following lines once.
+                disp('Final plotted principal infinitesimal strains are: ');
+                disp('  Subplot(1,1): Principal strain e1');
+                disp('  Subplot(1,2): Principal strain e2');
+                disp('  Subplot(1,3): Principal strain e3');
+                disp('  Subplot(2,1): Max shear (e1-e2)/2');
+                disp('  Subplot(2,2): Max shear (e1-e3)/2');
+                disp('  Subplot(2,3): Max shear (e2-e3)/2');
+                disp('  ');
+                disp('Final saved principal infinitesimal strains are: ');
+                disp('  ResultStrain.Strain(1:9:end) --> e1');
+                disp('  ResultStrain.Strain(2:9:end) --> (e1-e2)/2');
+                disp('  ResultStrain.Strain(3:9:end) --> (e1-e3)/2');
+                disp('  ResultStrain.Strain(4:9:end) --> (e1-e2)/2');
+                disp('  ResultStrain.Strain(5:9:end) --> e2');
+                disp('  ResultStrain.Strain(6:9:end) --> (e2-e3)/2');
+                disp('  ResultStrain.Strain(7:9:end) --> (e1-e3)/2');
+                disp('  ResultStrain.Strain(8:9:end) --> (e2-e3)/2');
+                disp('  ResultStrain.Strain(9:9:end) --> e3');
+                disp('  ');
+            end
+        case 4
             disp('Press "Ctrl+C" to modify codes by yourself.'); pause;
             
         otherwise
@@ -146,3 +179,4 @@ end
 %     temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
 % end
 % FStraintemp = FStrain(temp3);
+
