@@ -117,7 +117,7 @@ for tempi = 1:9:length(FStrain)
             % Don't modify this line
             FStraintemp = FStrainFinite(temp3);
             
-        case 3
+        case 3 % Principal strains (for infinitesimal strains)
             tempDU = [dudx, dudy, dudz; dvdx, dvdy, dvdz; dwdx, dwdy, dwdz];
             tempPrincipalStrain = eig(tempDU);
             FStrainFinite(tempi) = tempPrincipalStrain(1);
