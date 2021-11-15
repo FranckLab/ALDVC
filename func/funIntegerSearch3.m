@@ -151,13 +151,13 @@ switch method
         % may lose boundary regions
         gridxBackup = gridx; gridyBackup = gridy; gridzBackup = gridz;
         
-        while gridx(1) - tempSizeOfSearchRegion(1) < 1+3+0.5*winsize(1)+0.5*padSizeTotal(1)
+        while gridx(1) - tempSizeOfSearchRegion(1) < 7-0.5*winsize(1)+0.5*padSizeTotal(1)
             gridx(1) = gridx(1) + 1;
         end
-        while gridy(1) - tempSizeOfSearchRegion(2) < 1+3+0.5*winsize(2)+0.5*padSizeTotal(2)
+        while gridy(1) - tempSizeOfSearchRegion(2) < 7-0.5*winsize(2)+0.5*padSizeTotal(2)
             gridy(1) = gridy(1) + 1;
         end
-        while gridz(1) - tempSizeOfSearchRegion(3) < 1+3+0.5*winsize(3)+0.5*padSizeTotal(3)
+        while gridz(1) - tempSizeOfSearchRegion(3) < 7-0.5*winsize(3)+0.5*padSizeTotal(3)
             gridz(1) = gridz(1) + 1;
         end
         while gridx(end) + 0.5*winsize(1)+0.5*padSizeTotal(1) + tempSizeOfSearchRegion(1) > size(Img{1},1)-3
