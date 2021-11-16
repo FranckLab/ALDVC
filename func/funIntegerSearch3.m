@@ -120,7 +120,7 @@ switch method
         
         M{2} = M{1}'*M{1};
         
-        % Generate Moduluar transfer function (see eq. 3)
+        % Generate Moduluar transfer function 
         [~,~,MTF] = generateMTF((winsize+[1,1,1]));
         
         % may lose boundary regions
@@ -128,68 +128,50 @@ switch method
         
         
         % may lose boundary regions
-        while gridx(1) < 1+3+0.5*winsize(1)+0.5*padSizeTotal(1)
+        while gridx(1) < 1+3+0.0*winsize(1)  +0.5*padSizeTotal(1)
             gridx(1) = gridx(1) + 1;
         end
-        while gridy(1) < 1+3+0.5*winsize(2)+0.5*padSizeTotal(2)
+        while gridy(1) < 1+3+0.0*winsize(2)  +0.5*padSizeTotal(2)
             gridy(1) = gridy(1) + 1;
         end
-        while gridz(1) < 1+3+0.5*winsize(3)+0.5*padSizeTotal(3)
+        while gridz(1) < 1+3+0.0*winsize(3)  +0.5*padSizeTotal(3)
             gridz(1) = gridz(1) + 1;
         end
-        while gridx(end) + 0.5*winsize(1)+0.5*padSizeTotal(1) > size(Img{1},1)-3
+        while gridx(end) + 1*winsize(1)+0.5*padSizeTotal(1) > size(Img{1},1)-3
             gridx(end) = gridx(end) - 1;
         end
-        while gridy(end) + 0.5*winsize(2)+0.5*padSizeTotal(2) > size(Img{1},2)-3
+        while gridy(end) + 1*winsize(2)+0.5*padSizeTotal(2) > size(Img{1},2)-3
             gridy(end) = gridy(end) - 1;
         end
-        while gridz(end) + 0.5*winsize(3)+0.5*padSizeTotal(3) > size(Img{1},3)-3
+        while gridz(end) + 1*winsize(3)+0.5*padSizeTotal(3) > size(Img{1},3)-3
             gridz(end) = gridz(end) - 1;
         end
         
+        
     otherwise % search within certain domain
+        
         % may lose boundary regions
         gridxBackup = gridx; gridyBackup = gridy; gridzBackup = gridz;
         
-        while gridx(1) - tempSizeOfSearchRegion(1) < 7-0.5*winsize(1)+0.5*padSizeTotal(1)
+        while gridx(1) - tempSizeOfSearchRegion(1) < 1+3+0.0*winsize(1) + 0.5*padSizeTotal(1)
             gridx(1) = gridx(1) + 1;
         end
-        while gridy(1) - tempSizeOfSearchRegion(2) < 7-0.5*winsize(2)+0.5*padSizeTotal(2)
+        while gridy(1) - tempSizeOfSearchRegion(2) < 1+3+0.0*winsize(2) + 0.5*padSizeTotal(2)
             gridy(1) = gridy(1) + 1;
         end
-        while gridz(1) - tempSizeOfSearchRegion(3) < 7-0.5*winsize(3)+0.5*padSizeTotal(3)
+        while gridz(1) - tempSizeOfSearchRegion(3) < 1+3+0.0*winsize(3) + 0.5*padSizeTotal(3)
             gridz(1) = gridz(1) + 1;
         end
-        while gridx(end) + 0.5*winsize(1)+0.5*padSizeTotal(1) + tempSizeOfSearchRegion(1) > size(Img{1},1)-3
+        while gridx(end) + 1.0*winsize(1)+0.5*padSizeTotal(1) + tempSizeOfSearchRegion(1) > size(Img{1},1)-3
             gridx(end) = gridx(end) - 1;
         end
-        while gridy(end) + 0.5*winsize(2)+0.5*padSizeTotal(2) + tempSizeOfSearchRegion(2) > size(Img{1},2)-3
+        while gridy(end) + 1.0*winsize(2)+0.5*padSizeTotal(2) + tempSizeOfSearchRegion(2) > size(Img{1},2)-3
             gridy(end) = gridy(end) - 1;
         end
-        while gridz(end) + 0.5*winsize(3)+0.5*padSizeTotal(3) + tempSizeOfSearchRegion(3) > size(Img{1},3)-3
+        while gridz(end) + 1.0*winsize(3)+0.5*padSizeTotal(3) + tempSizeOfSearchRegion(3) > size(Img{1},3)-3
             gridz(end) = gridz(end) - 1;
         end
         
-%         % may lose boundary regions
-%         while gridx(1) - tempSizeOfSearchRegion < 1+3+0.5*winsize(1)
-%             gridx(1) = gridx(1) + 1;
-%         end
-%         while gridy(1) - tempSizeOfSearchRegion < 1+3+0.5*winsize(2) 
-%             gridy(1) = gridy(1) + 1;
-%         end
-%         while gridz(1) - tempSizeOfSearchRegion < 1+3+0.5*winsize(3) 
-%             gridz(1) = gridz(1) + 1;
-%         end
-%         while gridx(end) + winsize(1) + tempSizeOfSearchRegion > size(Img{1},1)-3
-%             gridx(end) = gridx(end) - 1;
-%         end
-%         while gridy(end) + winsize(2) + tempSizeOfSearchRegion > size(Img{1},2)-3
-%             gridy(end) = gridy(end) - 1;
-%         end
-%         while gridz(end) + winsize(3) + tempSizeOfSearchRegion > size(Img{1},3)-3
-%             gridz(end) = gridz(end) - 1;
-%         end
- 
 end
  
 
@@ -241,9 +223,9 @@ switch method
             %   hbar.iterate(1);
             %end
 
-            C = Img1Partemp(ii:ii+winsize(1), jj:jj+winsize(2), kk:kk+winsize(3));
+            C = Img{1}(ii:ii+winsize(1), jj:jj+winsize(2), kk:kk+winsize(3));
     
-            D = Img2Partemp(ii:ii+winsize(1), jj:jj+winsize(2), kk:kk+winsize(3));
+            D = Img{2}(ii:ii+winsize(1), jj:jj+winsize(2), kk:kk+winsize(3));
             C = MTF.*C; D = MTF.*D;
             if strcmp(method,'xcorr')
                 A = xCorr3(C,D,(winsize+[1,1,1]));
@@ -276,9 +258,9 @@ switch method
                 utemp(tempi) = nan; vtemp(tempi) = nan; wtemp(tempi) = nan;
             end
              
-            xtemp(tempi) = (ii+ii+winsize(1))/2 - padSize(1);
-            ytemp(tempi) = (jj+jj+winsize(2))/2 - padSize(2);
-            ztemp(tempi) = (kk+kk+winsize(3))/2 - padSize(3);
+            xtemp(tempi) = (ii+ii+winsize(1))/2; % - padSize(1);
+            ytemp(tempi) = (jj+jj+winsize(2))/2; % - padSize(2);
+            ztemp(tempi) = (kk+kk+winsize(3))/2; % - padSize(3);
             
             ck1temp(tempi) = ceil(tempi/(length(YList)*length(XList)));
             cj1temp(tempi) = ceil((tempi-(ck1temp(tempi)-1)*(length(YList)*length(XList)))/length(XList));
