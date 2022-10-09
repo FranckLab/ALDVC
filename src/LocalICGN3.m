@@ -5,10 +5,10 @@ function [U,F,HtempPar,LocalTime,ConvItPerEle] = LocalICGN3(U0,coordinatesFEM,Df
 
 winsize = DVCpara.winsize;
 winstepsize = DVCpara.winstepsize;
-ClusterNo = DVCpara.ClusterNo;
-interpmethod = DVCpara.interpmethod;
+clusterNo = DVCpara.clusterNo;
+interpMethod = DVCpara.interpMethod;
 displayIterOrNot = DVCpara.displayIterOrNot;
-MaxIterNum = DVCpara.Subpb1ICGNMaxIterNum;
+maxIterNum = DVCpara.Subpb1ICGNMaxIterNum;
  
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 temp = zeros(size(coordinatesFEM,1),1); 
@@ -32,12 +32,12 @@ ConvItPerEle = zeros(size(coordinatesFEM,1),1);
 % Go to the Parallel menu, then select Manage Cluster Profiles.
 % Select the "local" profile, and change NumWorkers to 4.
 % -----------------------------------------------
-switch ClusterNo
+switch clusterNo
     case 0 || 1
         h = waitbar(0,'Please wait for Subproblem 1 IC-GN iterations!'); tic;
         for tempj = 1 : size(coordinatesFEM,1)  % tempj is the element index
             
-            try
+           try
                 
                 DfEle = struct(); DfEle.imgSize = Df.imgSize;
                 xyz1 = coordinatesFEM(tempj,:)-floor(0.5*winsize); xyz7 = coordinatesFEM(tempj,:)+floor(0.5*winsize);
@@ -48,14 +48,14 @@ switch ClusterNo
                 %ImgEle.ImggAxis = [1,size(Img2,1),1,size(Img2,2),1,size(Img2,3)]-1;
                 
                 [Utemp, Ftemp, ConvItPerEle(tempj), HtempPar(tempj,:)] = funICGN3(U0(3*tempj-2:3*tempj), ...
-                    coordinatesFEM(tempj,:),DfEle,ImgEle,Img2,winsize,tol,ICGNmethod,interpmethod,MaxIterNum);
+                    coordinatesFEM(tempj,:),DfEle,ImgEle,Img2,winsize,tol,ICGNmethod,interpMethod,maxIterNum);
                 
-            catch
+           catch
                 
-                Utemp = nan(3,1);  Ftemp = nan(9,1); ConvItPerEle(tempj) = 0;
-                HtempPar(tempj,:) = zeros(1,78);
+               Utemp = nan(3,1);  Ftemp = nan(9,1); ConvItPerEle(tempj) = 0;
+               HtempPar(tempj,:) = zeros(1,78);
                 
-            end
+           end
             
             if displayIterOrNot == 1, disp(['ele ',num2str(tempj),' converge or not is ',num2str(ConvItPerEle(tempj)),' (#>0-converged; 0-unconverged)']); end
             
@@ -111,10 +111,10 @@ switch ClusterNo
             
                 % === Old version: use pre-stored local subset info to do Subpb1 ===
                 % [Utemp, Ftemp, ConvItPerEle(tempj), HtempPar(tempj,:)] = funICGN3(U0(3*tempj-2:3*tempj), ...
-                %     coordinatesFEM(tempj,:),DfElePar{:,tempj},imgSubsetPar{:,tempj},Img2Const.Value,winsize,tol,ICGNmethod,interpmethod,MaxIterNum);
+                %     coordinatesFEM(tempj,:),DfElePar{:,tempj},imgSubsetPar{:,tempj},Img2Const.Value,winsize,tol,ICGNmethod,interpMethod,MaxIterNum);
                 % === End of old version code ===
                 [Utemp, Ftemp, ConvItPerEle(tempj), HtempPar(tempj,:)] = funICGN3(U0(3*tempj-2:3*tempj), ...
-                    coordinatesFEM(tempj,:),DfEle,ImgEle,Img2Const.Value,winsize,tol,ICGNmethod,interpmethod,MaxIterNum);
+                    coordinatesFEM(tempj,:),DfEle,ImgEle,Img2Const.Value,winsize,tol,ICGNmethod,interpMethod,maxIterNum);
                 
             catch
                 
@@ -146,7 +146,7 @@ F(5:9:end) = F22tempPar; F(6:9:end) = F32tempPar; F(7:9:end) = F13tempPar; F(8:9
 
 % ------ Clear bad points for Local DIC ------
 % find bad points after Local Subset ICGN
-[row1,~] = find(ConvItPerEle(:,1)>MaxIterNum);
+[row1,~] = find(ConvItPerEle(:,1)>maxIterNum);
 [row2,~] = find(ConvItPerEle(:,1)<1);
 row = unique(union(row1,row2)); LocalICGNBadPtNum = length(row);
 % find bad points with unusual ICGN steps

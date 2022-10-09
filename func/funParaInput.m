@@ -2,95 +2,136 @@ function paraInput = funParaInput(paraName)
  
 switch paraName
     
-    case 'InitFFTMethod'
+    case 'initFFTMethod'
         fprintf('\n');
         fprintf('--- Select initial guess method --- \n')
-            fprintf("    0: 'bigxcorr' \n")
-            fprintf('       By default: no prior info of deformation field; \n')
-            fprintf('       Multiscale zero normalized cross correlation for large deformation; \n')
-            fprintf("    1: 'xcorr' \n")
-            fprintf('       Zero normalized cross correlation for small deformation; \n')
-            fprintf("    2: 'phasecorr' \n")
+            fprintf("    1: 'bigxcorr' (by default) \n")
+            fprintf('       No prior info of the unknown deformation field; \n')
+            fprintf('       Multiscale zero normalized cross correlation to guess large deformations; \n')
+            fprintf("    2: 'xcorr' \n")
+            fprintf('       Zero normalized cross correlation to guess small deformations; \n')
+            fprintf("    3: 'phasecorr' \n")
             fprintf('       Phase correlation for small deformation; \n')
-            fprintf("    3: 'bigxcorrUni' \n")
-            fprintf('       Zero normalized cross correlation for large deformation (robust but expensive!); \n')
-            fprintf("    4: 'bigphasecorrUni' \n")
-            fprintf('       Phase cross correlation for large deformation (robust but expensive!); \n')
-        prompt = 'Input here: '; InitFFTMethod = input(prompt);
-        while (InitFFTMethod ~= 0) && (InitFFTMethod ~= 1) && (InitFFTMethod ~= 2) && (InitFFTMethod ~= 3) && (InitFFTMethod ~= 4) 
+            fprintf("    4: 'bigxcorrUni' \n")
+            fprintf('       Zero normalized cross correlation to guess large deformations (robust but expensive!); \n')
+            fprintf("    5: 'bigphasecorrUni' \n")
+            fprintf('       Phase cross correlation to guess large deformations (robust but expensive!); \n')
+        prompt = 'Input here (choose from 1-5): '; initFFTMethod = input(prompt);
+        while (initFFTMethod ~= 1) && (initFFTMethod ~= 2) && (initFFTMethod ~= 3) && (initFFTMethod ~= 4) && (initFFTMethod ~= 5) 
             disp('****** Wrong input! ******')
             fprintf('--- Select initial guess method --- \n')
-            fprintf("    0: 'bigxcorr' \n")
-            fprintf('       By default: no prior info of deformation field; \n')
-            fprintf('       Multiscale zero normalized cross correlation for large deformation; \n')
-            fprintf("    1: 'xcorr' \n")
-            fprintf('       Zero normalized cross correlation for small deformation; \n')
-            fprintf("    2: 'phasecorr' \n")
+            fprintf("    1: 'bigxcorr' (by default) \n")
+            fprintf('       No prior info of the unknown deformation field; \n')
+            fprintf('       Multiscale zero normalized cross correlation to guess large deformations; \n')
+            fprintf("    2: 'xcorr' \n")
+            fprintf('       Zero normalized cross correlation to guess small deformations; \n')
+            fprintf("    3: 'phasecorr' \n")
             fprintf('       Phase correlation for small deformation; \n')
-            fprintf("    3: 'bigxcorrUni' \n")
-            fprintf('       Zero normalized cross correlation for large deformation (expensive!); \n')
-            fprintf("    4: 'bigphasecorrUni' \n")
-            fprintf('       Phase cross correlation for large deformation (expensive!); \n')
-            prompt = 'Input here: '; InitFFTMethod = input(prompt);
+            fprintf("    4: 'bigxcorrUni' \n")
+            fprintf('       Zero normalized cross correlation to guess large deformations (robust but expensive!); \n')
+            fprintf("    5: 'bigphasecorrUni' \n")
+            fprintf('       Phase cross correlation to guess large deformations (robust but expensive!); \n')
+            prompt = 'Input here (choose from 1-5): '; initFFTMethod = input(prompt);
         end
-        switch InitFFTMethod
-            case 0
-                paraInput = 'bigxcorr';
+        switch initFFTMethod
             case 1
-                paraInput = 'xcorr';
+                paraInput = 'bigxcorr';
             case 2
-                paraInput = 'phasecorr';
+                paraInput = 'xcorr';
             case 3
-                paraInput = 'bigxcorrUni';
+                paraInput = 'phasecorr';
             case 4
+                paraInput = 'bigxcorrUni';
+            case 5
                 paraInput = 'bigphasecorrUni';
             otherwise
                 paraInput = 'bigxcorr';
         end
         
         
-    case 'NewFFTSearch'
+    case 'newFFTSearch'
         fprintf('\n'); 
-        fprintf('Since we are dealing with image sequences, for each new frame,   \n')
-        fprintf('do we use last frame result as the initial guess or   \n')
-        fprintf('Redo FFT initial guess for every new frame? \n    0: Use last frame (by default); \n    1: Redo initial guess.  \n')
+        fprintf('Since we are dealing with image sequences, for each new frame,   \n');
+        fprintf('do we use last frame result as the initial guess or   \n');
+        fprintf('Redo FFT initial guess for every new frame? \n    0: Use last frame (by default); \n    1: Redo initial guess.  \n');
         prompt = 'Input here: '; StillFFTSearch = input(prompt); paraInput = StillFFTSearch;
         fprintf('\n');
         
+
     case 'Subpb2FDOrFEM'
         fprintf('\n'); 
         fprintf('--- Method to solve ALDVC global step Subproblem 2 ---    \n')
-        fprintf('    1: Finite difference(Recommended)   \n    2: Finite element method  \n')
-        prompt = 'Input here: '; Subpb2FDOrFEM = input(prompt); 
+        fprintf('    1: Finite difference (recommended) \n    2: Finite element method (might have edge effects) \n');
+        prompt = 'Input here (choose 1 or 2): '; Subpb2FDOrFEM = input(prompt); 
         while (Subpb2FDOrFEM ~= 1) && (Subpb2FDOrFEM ~= 2)    
             disp('****** Wrong input! ******')
             fprintf('\n'); 
             fprintf('--- Method to solve ALDVC global step Subproblem 2 ---    \n')
-            fprintf('    1: Finite difference(Recommended)   \n    2: Finite element method  \n')
-            prompt = 'Input here: '; Subpb2FDOrFEM = input(prompt); 
+            fprintf('    1: Finite difference (recommended) \n    2: Finite element method (might have edge effects) \n');
+            prompt = 'Input here (choose 1 or 2): '; Subpb2FDOrFEM = input(prompt); 
         end
         switch Subpb2FDOrFEM
             case 1
-                paraInput = 'FD';
+                paraInput = 'finitedifference';
             case 2
-                paraInput = 'FEM';
+                paraInput = 'finiteelement';
             otherwise
         end
         
         
-    case 'ClusterNo'
+    case 'trackingMode'
+        fprintf('--- Choose cumulative or incremental mode ---  \n')
+        fprintf('     1: Cumulative (by default);  \n')
+        fprintf('     2: Incremental (to track large deformations);  \n')
+        prompt = 'Input here (choose 1 or 2): '; trackingMode = input(prompt);
+        while (trackingMode ~= 1) && (trackingMode ~= 2)
+            disp('****** Wrong input! ******')
+            fprintf('\n'); 
+            fprintf('--- Choose cumulative or incremental mode ---  \n')
+            fprintf('     1: Cumulative (by default);  \n')
+            fprintf('     2: Incremental (to track large deformations);  \n')
+            prompt = 'Input here (choose 1 or 2): '; trackingMode = input(prompt);
+        end
+        switch trackingMode
+            case 1
+                paraInput = 'cumulative';
+            case 2
+                paraInput = 'incremental';
+            otherwise
+        end
+
+        
+    case 'clusterNo'
         fprintf('\n'); disp('--- Set up Parallel pool ---');
         fprintf('How many parallel pools to open? (Put in 1 if no parallel computing) \n');
         prompt = 'Input here: ';
-        ClusterNo = input(prompt);
-        % if ClusterNo > 1
+        clusterNo = input(prompt);
+        %%%%%% Codes to delete current cluster assignments and create parallel pool on cluster %%%%%% 
+        % if clusterNo > 1
         %     delete(gcp); myCluster = parcluster('local'); delete(myCluster.Jobs);
-        %     parpool(ClusterNo,'SpmdEnabled',false);
+        %     parpool(clusterNo,'SpmdEnabled',false);
         % end
-        paraInput = ClusterNo;
+        paraInput = clusterNo;
+
+
+
+
  
-    
-    case 'SmoothDispOrNot' % Smooth displacements
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%% Section 8: Inputs to plot strain results %%%%% 
+    case 'ConvertUnit' % Convert units from pixels to the physical world
+        fprintf("Convert units from pixels to the physical world. \n");
+        disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+        fprintf("Results in Section 8 (ResultStrain) will be converted to the physical world unit instead of the pixel unit.  \n");
+        disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+        fprintf("If you want to keep the pixel unit, enter '[1,1,1]' or '1'. \n")
+        prompt = 'Input here (e.g., mm/px, um/px): ';
+        um2px = input(prompt);
+        if length(um2px)==1, um2px = um2px*ones(1,3); end
+        paraInput = um2px;
+        fprintf('------------------------------------- \n');
+
+    case 'SmoothDispOrNot' % Smooth displacements or not
         prompt = 'Do you want to smooth displacement? (0-yes; 1-no)';
         DoYouWantToSmoothOnceMore = input(prompt);
         paraInput = DoYouWantToSmoothOnceMore;

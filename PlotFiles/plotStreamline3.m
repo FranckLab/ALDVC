@@ -11,10 +11,8 @@ function plotStreamline3(xGrid,yGrid,zGrid,u3x_meas_Grid,u3y_meas_Grid,u3z_meas_
 
 u3_mag_meas_Grid = sqrt(u3x_meas_Grid.^2 + u3y_meas_Grid.^2 + u3z_meas_Grid.^2);
 
-figure,streamcolor(  xGrid,  yGrid, zGrid, ...
-    (u3x_meas_Grid), u3y_meas_Grid,  u3z_meas_Grid, ...
-     (xGridsl), (yGridsl), (zGridsl), u3_mag_meas_Grid  );
- 
+figure,streamcolor(xGrid,yGrid,zGrid, u3x_meas_Grid, ...
+    u3y_meas_Grid,u3z_meas_Grid,xGridsl,yGridsl,zGridsl,u3_mag_meas_Grid);
 
 u3_mag_max = max(u3_mag_meas_Grid(:));
 cb=colorbar('Ticks',[0,0.25,0.5,0.75,1],'TickLabels', ...
@@ -23,5 +21,5 @@ cb=colorbar('Ticks',[0,0.25,0.5,0.75,1],'TickLabels', ...
 
 
 view([60,30]); set(gca,'fontsize',14); set(cb,'fontsize',16);
-ylabel('x axis'); xlabel('y axis'); zlabel('z axis');  
+ylabel('y axis'); xlabel('x axis'); zlabel('z axis');  
 grid minor; grid on; set(gcf,'color','w'); 
