@@ -6,8 +6,8 @@ function [USubpb1,HPar,ALSub1Time,ConvItPerEle] = Subpb13(USubpb2,FSubpb2,udual,
         Df,Img1,Img2,mu,beta,HPar,ALSolveStep,DVCpara,ICGNmethod,tol)
     
 winsize = DVCpara.winsize;
-ClusterNo = DVCpara.ClusterNo;
-interpmethod = DVCpara.interpmethod;
+clusterNo = DVCpara.clusterNo;
+interpMethod = DVCpara.interpMethod;
 displayIterOrNot = DVCpara.displayIterOrNot;
 MaxIterNum = DVCpara.Subpb1ICGNMaxIterNum;
  
@@ -29,7 +29,7 @@ for tempj = 1:size(HPar,1), HtempPar(:,tempj)=HPar{tempj}; end
 % Go to the Parallel menu, then select Manage Cluster Profiles.
 % Select the "local" profile, and change NumWorkers to 4.
 % -----------------------------------------------
-switch ClusterNo
+switch clusterNo
     case 0 || 1
         h = waitbar(0,'Please wait for Subproblem 1 IC-GN iterations!'); tic;
         DfEle = struct(); DfEle.imgSize = Df.imgSize;
@@ -71,7 +71,7 @@ switch ClusterNo
                 [Utemp, ConvItPerEle(tempj), ~] = ...
                     funICGN_Subpb13(coordinatesFEM(tempj,:),DfEle,ImgEle,Img2,winsize,...
                     HLocal,beta,mu,udual(9*tempj-8:9*tempj),vdual(3*tempj-2:3*tempj),...
-                    USubpb2(3*tempj-2:3*tempj),FSubpb2(9*tempj-8:9*tempj),tol,ICGNmethod,interpmethod,MaxIterNum);
+                    USubpb2(3*tempj-2:3*tempj),FSubpb2(9*tempj-8:9*tempj),tol,ICGNmethod,interpMethod,MaxIterNum);
                 
             catch
                 Utemp = nan(3,1); ConvItPerEle(tempj) = 0;
@@ -100,7 +100,7 @@ switch ClusterNo
         % -----------------------------------------------
         % Start parallel computing
         % ****** This step needs to be careful: may be out of memory ******
-        % delete(gcp);parpool(ClusterNo); tic;
+        % delete(gcp);parpool(clusterNo); tic;
         
         % % === Old version: to pre-store local subset info before Subpb1 ===
         % %DfElePar = cell(1,size(coordinatesFEM,1));
@@ -200,7 +200,7 @@ switch ClusterNo
                 [Utemp, ConvItPerEle(tempjj), ~] = ...
                     funICGN_Subpb13(coordinatesFEM(tempjj,:),DfEle,ImgEle,Img2Const.Value,winsize,...
                     HLocal,beta,mu,udual(9*tempjj-8:9*tempjj),vdual(3*tempjj-2:3*tempjj),...
-                    USubpb2(3*tempjj-2:3*tempjj),FSubpb2(9*tempjj-8:9*tempjj),tol,ICGNmethod,interpmethod,MaxIterNum);
+                    USubpb2(3*tempjj-2:3*tempjj),FSubpb2(9*tempjj-8:9*tempjj),tol,ICGNmethod,interpMethod,MaxIterNum);
               
             catch
                 

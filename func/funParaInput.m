@@ -72,9 +72,9 @@ switch paraName
         end
         switch Subpb2FDOrFEM
             case 1
-                paraInput = 'finitedifference';
+                paraInput = 'finiteDifference';
             case 2
-                paraInput = 'finiteelement';
+                paraInput = 'finiteElement';
             otherwise
         end
         
