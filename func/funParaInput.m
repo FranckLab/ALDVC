@@ -119,24 +119,24 @@ switch paraName
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%% Section 8: Inputs to plot strain results %%%%% 
-    case 'ConvertUnit' % Convert units from pixels to the physical world
-        fprintf("Convert units from pixels to the physical world. \n");
+    case 'convertUnit' % Convert units from voxels to physical world units
+        fprintf("Convert units from voxels to physical world units. \n");
         disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-        fprintf("Results in Section 8 (ResultStrain) will be converted to the physical world unit instead of the pixel unit.  \n");
+        fprintf("Results in Section 8 (ResultStrain) will be converted to physical world units instead of the voxel unit.  \n");
         disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-        fprintf("If you want to keep the pixel unit, enter '[1,1,1]' or '1'. \n")
-        prompt = 'Input here (e.g., mm/px, um/px): ';
+        fprintf("If you want to keep the voxel unit, please enter '[1,1,1]' or '1'. \n")
+        prompt = 'Input here (e.g., [a,b,c] mm/px, um/px, etc.): ';
         um2px = input(prompt);
         if length(um2px)==1, um2px = um2px*ones(1,3); end
         paraInput = um2px;
         fprintf('------------------------------------- \n');
 
-    case 'SmoothDispOrNot' % Smooth displacements or not
+    case 'smoothDispOrNot' % Smooth displacements or not
         prompt = 'Do you want to smooth displacement? (0-yes; 1-no)';
         DoYouWantToSmoothOnceMore = input(prompt);
         paraInput = DoYouWantToSmoothOnceMore;
     
-    case 'StrainMethodOp' % Choose strain computation method  
+    case 'strainCalculationMethod' % Choose strain computation method  
         fprintf('What method to use to compute strain? \n');
         fprintf('    0: Direct output from ALDVC; \n');
         fprintf('    1: Finite difference(Recommended); \n');
@@ -156,15 +156,15 @@ switch paraName
         end
         paraInput = [MethodToComputeStrain];
           
-    case 'StrainType' % Choose strain computation method again
+    case 'strainType' % Choose strain computation method again
         fprintf('Infinitesimal stran or finite strain? \n');
         fprintf('    0: Infinitesimal stran; \n');
         fprintf('    1: Eulerian strain; \n');
         fprintf('    2: Green-Lagrangian strain; \n');
         fprintf('    3: Others: code by yourself; \n');
         prompt = 'Input here: ';
-        StrainType = input(prompt);
-        while (StrainType ~= 0) && (StrainType ~= 1) && (StrainType ~= 2) && (StrainType ~= 3)
+        strainType = input(prompt);
+        while (strainType ~= 0) && (strainType ~= 1) && (strainType ~= 2) && (strainType ~= 3)
             disp('****** Wrong input! ******')
             fprintf('Infinitesimal stran or finite strain? \n');
             fprintf('    0: Infinitesimal stran; \n');
@@ -172,25 +172,25 @@ switch paraName
             fprintf('    2: Green-Lagrangian strain; \n');
             fprintf('    3: Others: code by yourself; \n');
             prompt = 'Input here: ';
-            StrainType = input(prompt);
+            strainType = input(prompt);
         end
-        paraInput = [StrainType];
+        paraInput = [strainType];
             
-    case 'PlotComponentEachOrAll'
+    case 'plotEachComponentOrAll'
         fprintf('Plot displacement & strain components individually or all together? \n');
         fprintf('    0: Plot each component individually; \n');
         fprintf('    1: Plot all the deformation components together; \n');
         prompt = 'Input here: ';
-        PlotComponentEachOrAll = input(prompt);
-        while (PlotComponentEachOrAll ~= 0) && (PlotComponentEachOrAll ~= 1)
+        plotEachComponentOrAll = input(prompt);
+        while (plotEachComponentOrAll ~= 0) && (plotEachComponentOrAll ~= 1)
             disp('****** Wrong input! ******')
             fprintf('Plot displacement & strain components individually or all together? \n');
             fprintf('    0: Plot each component individually; \n');
             fprintf('    1: Plot all the deformation components together; \n');
             prompt = 'Input here: ';
-            PlotComponentEachOrAll = input(prompt);
+            plotEachComponentOrAll = input(prompt);
         end
-        switch PlotComponentEachOrAll
+        switch plotEachComponentOrAll
             case 0
                 paraInput = 'Individual';
             case 1
@@ -199,7 +199,7 @@ switch paraName
                 disp('****** Wrong input! ******')
         end
         
-    case 'SaveFigFormat'
+    case 'saveFigFormat'
         fprintf('Save figures into different format: \n');
         fprintf('    1: jpeg(Choose transparency 0~1) \n');
         fprintf('    2: pdf(Choose transparency = 1) \n'); 
@@ -207,7 +207,7 @@ switch paraName
         prompt = 'Input here: '; MethodToSaveFig = input(prompt);
         paraInput = MethodToSaveFig;
         
-    case 'OrigDICImgTransparency'
+    case 'originalDICImgTransparency'
         fprintf('Define transparency for overlaying original images: \n')
         fprintf('Input a real number between 0(Only original images) \n')
         fprintf('and 1(Non-transparent deformation results).\n')
