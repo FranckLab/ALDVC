@@ -138,8 +138,8 @@ switch paraName
     
     case 'strainCalculationMethod' % Choose strain computation method  
         fprintf('What method to use to compute strain? \n');
-        fprintf('    0: Direct output from ALDVC; \n');
-        fprintf('    1: Finite difference(Recommended); \n');
+        fprintf('    0: Direct output from ALDVC (by default); \n');
+        fprintf('    1: Finite difference; \n');
         fprintf('    2: Plane fitting; \n');
         fprintf('    3: Finite element; \n');
         prompt = 'Input here: ';
@@ -147,8 +147,8 @@ switch paraName
         while (MethodToComputeStrain ~= 0) && (MethodToComputeStrain ~= 1) && (MethodToComputeStrain ~= 2) && (MethodToComputeStrain ~= 3)
             disp('****** Wrong input! ******')
             fprintf('What method to use to compute strain? \n');
-            fprintf('    0: Direct output from ALDIC; \n');
-            fprintf('    1: Finite difference(Recommended); \n');
+            fprintf('    0: Direct output from ALDIC (by default); \n');
+            fprintf('    1: Finite difference; \n');
             fprintf('    2: Plane fitting; \n');
             fprintf('    3: Finite element; \n');
             prompt = 'Input here: ';
@@ -158,39 +158,41 @@ switch paraName
           
     case 'strainType' % Choose strain computation method again
         fprintf('Infinitesimal stran or finite strain? \n');
-        fprintf('    0: Infinitesimal stran; \n');
-        fprintf('    1: Eulerian strain; \n');
-        fprintf('    2: Green-Lagrangian strain; \n');
-        fprintf('    3: Others: code by yourself; \n');
+        fprintf('    0: Infinitesimal/small stran (by default); \n');
+        fprintf('    1: Eulerian-Almansi finite strain; \n');
+        fprintf('    2: Green-Lagrangian finite strain; \n');
+        fprintf('    3: Hencky logarithmic strain; \n');
+        fprintf('    4: Others: coding by yourself; \n');
         prompt = 'Input here: ';
         strainType = input(prompt);
         while (strainType ~= 0) && (strainType ~= 1) && (strainType ~= 2) && (strainType ~= 3)
             disp('****** Wrong input! ******')
             fprintf('Infinitesimal stran or finite strain? \n');
-            fprintf('    0: Infinitesimal stran; \n');
-            fprintf('    1: Eluerian strain; \n');
-            fprintf('    2: Green-Lagrangian strain; \n');
-            fprintf('    3: Others: code by yourself; \n');
+            fprintf('    0: Infinitesimal/small stran (by default); \n');
+            fprintf('    1: Eulerian-Almansi finite strain; \n');
+            fprintf('    2: Green-Lagrangian finite strain; \n');
+            fprintf('    3: Hencky logarithmic strain; \n');
+            fprintf('    4: Others: coding by yourself; \n');
             prompt = 'Input here: ';
             strainType = input(prompt);
         end
         paraInput = [strainType];
             
-    case 'plotEachComponentOrAll'
+    case 'plotComponentIndividialOrAll'
         fprintf('Plot displacement & strain components individually or all together? \n');
         fprintf('    0: Plot each component individually; \n');
         fprintf('    1: Plot all the deformation components together; \n');
         prompt = 'Input here: ';
-        plotEachComponentOrAll = input(prompt);
-        while (plotEachComponentOrAll ~= 0) && (plotEachComponentOrAll ~= 1)
+        plotComponentIndividialOrAll = input(prompt);
+        while (plotComponentIndividialOrAll ~= 0) && (plotComponentIndividialOrAll ~= 1)
             disp('****** Wrong input! ******')
             fprintf('Plot displacement & strain components individually or all together? \n');
             fprintf('    0: Plot each component individually; \n');
             fprintf('    1: Plot all the deformation components together; \n');
             prompt = 'Input here: ';
-            plotEachComponentOrAll = input(prompt);
+            plotComponentIndividialOrAll = input(prompt);
         end
-        switch plotEachComponentOrAll
+        switch plotComponentIndividialOrAll
             case 0
                 paraInput = 'Individual';
             case 1
@@ -201,16 +203,16 @@ switch paraName
         
     case 'saveFigFormat'
         fprintf('Save figures into different format: \n');
-        fprintf('    1: jpeg(Choose transparency 0~1) \n');
-        fprintf('    2: pdf(Choose transparency = 1) \n'); 
-        fprintf('    3: Others: Edit codes in ./plotFiles/SaveFigFiles.m \n'); 
+        fprintf('    1: jpeg (choose transparency 0~1) \n');
+        fprintf('    2: pdf (choose transparency = 1) \n'); 
+        fprintf('    3: Others: edit codes in ./plotFiles/SaveFigFiles.m \n'); 
         prompt = 'Input here: '; MethodToSaveFig = input(prompt);
         paraInput = MethodToSaveFig;
         
     case 'originalDICImgTransparency'
         fprintf('Define transparency for overlaying original images: \n')
-        fprintf('Input a real number between 0(Only original images) \n')
-        fprintf('and 1(Non-transparent deformation results).\n')
+        fprintf('Input a real number between 0 (only original images) \n')
+        fprintf('and 1 (non-transparent deformation results).\n')
         prompt = 'Input here(e.g. 0.5): '; OrigDICImgTransparency = input(prompt);
         paraInput = OrigDICImgTransparency;
         

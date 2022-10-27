@@ -69,8 +69,9 @@ ResultConvItPerEle = cell(ImgSeqLength-1,1);    %To store local and Subpb1 ICGN 
 ResultSizeOfFFTSearch = cell(ImgSeqLength-1,1); %To store the size of the initial guess search area
 
 if strcmp(DVCpara.trackingMode,'cumulative')==1 %%%%%% (i) Cumulative tracking mode %%%%%%
-    ResultCoordinatesFEM = [];                  %To store DVC-FE-mesh nodal points coordinates
-    ResultElementsFEM = [];                     %To store DVC-FE-mesh elements (node connectivities)
+    ResultFEMeshEachFrame = cell(1,1);          %To store FE-mesh coordinates and elements
+    % ResultCoordinatesFEM = [];                %To store DVC-FE-mesh nodal points coordinates
+    % ResultElementsFEM = [];                   %To store DVC-FE-mesh elements (node connectivities)
 elseif strcmp(DVCpara.trackingMode,'incremental')==1  %%%%%% (ii) Incremental tracking mode %%%%%%    
     ResultFEMeshEachFrame = cell(ImgSeqLength-1,1); %To store FE-mesh coordinates and elements
 else %%%%%% (iii) Unknown tracking mode
@@ -153,7 +154,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
             ResultCoordinatesFEM = DVCmesh.coordinatesFEM; %To store DVC-FE-mesh nodal points coordinates
             ResultElementsFEM = DVCmesh.elementsFEM; %To store DVC-FE-mesh elements (node connectivities)
             if ImgSeqNum==2 %To store DVC-FE-mesh
-                ResultFEMeshEachFrame = struct( ...
+                ResultFEMeshEachFrame{1} = struct( ...
                 'coordinatesFEM',DVCmesh.coordinatesFEM,'elementsFEM',DVCmesh.elementsFEM, ...
                 'xyz0',xyz0,'winsize',DVCpara.winsize,'winstepsize',DVCpara.winstepsize, ...
                 'gridxyROIRange',DVCpara.gridRange,'sizeOfFFTSearchRegion',sizeOfFFTSearchRegion);
@@ -224,7 +225,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     close all; Plotdisp_show3(USubpb1,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);  %Plot displacement fields
     Plotstrain_show3(FSubpb1,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);           %Plot small strain fields
     save(['Subpb1_step',num2str(ALADMMIterStep)],'USubpb1','FSubpb1');              %Save solved results: U & F
-    ULocalICGN = USubpb1; FLocalICGN = FSubpb1; %Also save these results for future comparison since they are from the conventional DVC method
+    U_accumICGN = USubpb1; F_accumICGN = FSubpb1; %Also save these results for future comparison since they are from the conventional DVC method
     fprintf('------------ Section 4 Done ------------ \n \n')
      
     
@@ -500,11 +501,11 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     % Plotstrain03(full(FSubpb2),xyz0.x,xyz0.y,xyz0.z,size(Img{1}),'individual');
     
     ResultDisp{ImgSeqNum-1}.U = full(USubpb2);                %Store ALDVC displacement results
-    ResultDisp{ImgSeqNum-1}.ULocalICGN = full(ULocalICGN);    %Store Local Subset DVC results
+    ResultDisp{ImgSeqNum-1}.U_accumICGN = full(U_accumICGN);    %Store Local Subset DVC results
     ResultDisp{ImgSeqNum-1}.U0 = full(U0);                    %Store FFT-based cross correlation DVC results
     
     ResultDefGrad{ImgSeqNum-1}.F = full(FSubpb2);             %Store ALDVC displacement gradient results
-    ResultDefGrad{ImgSeqNum-1}.FLocalICGN = full(FLocalICGN); %Store Local Subset DVC (direct) results
+    ResultDefGrad{ImgSeqNum-1}.F_accumICGN = full(F_accumICGN); %Store Local Subset DVC (direct) results
     
     ResultMuBeta{ImgSeqNum-1}.beta = ALVarBeta;               %Store ADMM parameter "beta"
     ResultMuBeta{ImgSeqNum-1}.mu = ALVarMu;                   %Store ADMM parameter "mu"
@@ -514,9 +515,9 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
 end
  
 
-%% Section 7
+%% Section 6'
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This section is to check ADMM iterations are converged
+% This section is to check that ADMM iterations are converged
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('------------ Section 7 Start ------------ \n')
 % ====== Check convergence ======
@@ -570,7 +571,7 @@ fprintf('------------ Section 7 Done ------------ \n \n')
 % clear a ALSub1BadPtNum ALSub1Timetemp atemp b btemp cc ConvItPerEletemp hbar Hbar
 
 
-%% Section 6' 
+%% Section 7
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This section is only for "incremental" tracking mode where "cumulative"
 % displacement fields can be interpolated w.r.t the first reference frame
@@ -614,7 +615,7 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % ------ Smooth displacements ------
-        % Plotdisp_show3(full(ULocal),coordinatesFEM,elementsFEM);
+        % Plotdisp_show3(full(U_accum),coordinatesFEM,elementsFEM);
         % prompt = 'Do you want to smooth displacement? (0-yes; 1-no)';
         % DoYouWantToSmoothOnceMore = input(prompt); DispFilterSize=0; DispFilterStd=1;
         DoYouWantToSmoothOnceMore = 0;
@@ -622,7 +623,7 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
         try
             while DoYouWantToSmoothOnceMore==0 && SmoothTime<3
                 U_accum = funSmoothDisp3(U_accum,DVCmesh,DVCpara);
-                % close all; Plotdisp_show3(full(ULocal),coordinatesFEM,elementsFEM); % Plotuv(ULocal,x0,y0);
+                % close all; Plotdisp_show3(full(U_accum),coordinatesFEM,elementsFEM); % Plotuv(U_accum,x0,y0);
                 SmoothTime = SmoothTime + 1; % DoYouWantToSmoothOnceMore = input(prompt);
             end
         catch
@@ -650,7 +651,7 @@ fprintf('------------ Section 8 Start ------------ \n')
 % This section is to compute strain and plot figures
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ------ Convert units from pixels to physical world units ------
-DVCpara.um2px = funParaInput('convertUnit');
+DVCpara.um2px = funParaInput('convertUnit'); %um2px/mm2px/... ratio
 % ------ Smooth displacements ------
 DVCpara.doYouWantToSmoothOnceMore = funParaInput('smoothDispOrNot');
 % ------ Choose strain computation method ------
@@ -658,7 +659,7 @@ DVCpara.strainCalculationMethod = funParaInput('strainCalculationMethod');
 % ------ Choose strain type (infinitesimal, Eulerian, Green-Lagrangian) ------
 DVCpara.strainType = funParaInput('strainType');
 % ------ Plot displacement & strain components individually or all together ------
-DVCpara.plotEachComponentOrAll = funParaInput('plotEachComponentOrAll');
+DVCpara.plotComponentIndividialOrAll = funParaInput('plotComponentIndividialOrAll');
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ------ Start plotting part -----
@@ -675,7 +676,7 @@ for ImgSeqNum = 2:length(fileNameAll)
     %%%%%% (ii) Incremental tracking mode %%%%%%
     elseif strcmp(DVCpara.trackingMode,'incremental')==1  
         U_accum= ResultDisp{ImgSeqNum-1}.U_accum;
-        F_accum = 0*repmat(U_accum,2,1); %Initialize this variable
+        F_accum = 0*repmat(U_accum,2,1); %Initialize def. grad. tensors
         coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
         elementsFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.elementsFEM;
     else %%%%%% (iii) Unknown tracking mode
@@ -692,14 +693,14 @@ for ImgSeqNum = 2:length(fileNameAll)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ------ Smooth displacements ------
-    % Plotdisp_show3(full(ULocal),coordinatesFEM,elementsFEM);
+    % Plotdisp_show3(full(U_accum),coordinatesFEM,elementsFEM);
     % prompt = 'Do you want to smooth displacement? (0-yes; 1-no)';
     % DoYouWantToSmoothOnceMore = input(prompt); DispFilterSize=0; DispFilterStd=1;
     SmoothTime=0;
     try
         while DoYouWantToSmoothOnceMore==0 && SmoothTime<3
-            ULocal = funSmoothDisp3(ULocal,DVCmesh,DVCpara);
-            % close all; Plotdisp_show3(full(ULocal),coordinatesFEM,elementsFEM); % Plotuv(ULocal,x0,y0); 
+            U_accum = funSmoothDisp3(U_accum,DVCmesh,DVCpara);
+            % close all; Plotdisp_show3(full(U_accum),coordinatesFEM,elementsFEM); % Plotuv(U_accum,x0,y0); 
             SmoothTime = SmoothTime + 1; %DoYouWantToSmoothOnceMore = input(prompt);
         end
     catch
@@ -714,13 +715,15 @@ for ImgSeqNum = 2:length(fileNameAll)
     close all;
     
     % ------ Plot disp ------
-    Plotdisp03(ULocal,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM,DVCpara.plotEachComponentOrAll);
+    Plotdisp3(U_accum,DVCmesh.coordinatesFEM,DVCpara.plotComponentIndividialOrAll);
      
     % ------ Plot strain ------
-    %Plotstrain_show3(FLocal,coordinatesFEM,elementsFEM);
-    Plotstrain03(full(FStraintemp),xyz0.x(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
+    %Plotstrain_show3(F_accum,coordinatesFEM,elementsFEM);
+    Plotstrain3(full(FStraintemp), ...
+        xyz0.x(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
         xyz0.y(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
-        xyz0.z(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)),size(Img{1}),DVCpara.plotEachComponentOrAll);
+        xyz0.z(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
+        DVCpara.plotComponentIndividialOrAll);
     
     % ------ Store strain data ------
     ResultStrain{ImgSeqNum-1}.Strain = FStraintemp;
@@ -732,16 +735,16 @@ for ImgSeqNum = 2:length(fileNameAll)
     % % ------- Add filter and plot strain field -------
     % Plotstrain_Fij;
     % %caxis auto; load('colormap_RdYlBu.mat'); colormap(cMap)
-    % Plotstrain03(FStraintemp,xyz0.x(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),xyz0.y(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad), ...
-    %    xyz0.z(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),size(Img{1}),DVCpara.plotEachComponentOrAll);
+    % Plotstrain3(FStraintemp,xyz0.x(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),xyz0.y(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad), ...
+    %    xyz0.z(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),DVCpara.plotComponentIndividialOrAll);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ------ Save figures ------
     % Write down your own codes to save figures! E.g.: % print(['fig_dispu'],'-dpdf');
-    if strcmp(DVCpara.plotEachComponentOrAll,'All')==1
+    if strcmp(DVCpara.plotComponentIndividialOrAll,'All')==1
         figure(1); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_disp.fig']);
         figure(2); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_strain.fig']);
-    elseif strcmp(DVCpara.plotEachComponentOrAll,'Individual')==1
+    elseif strcmp(DVCpara.plotComponentIndividialOrAll,'Individual')==1
         figure(1); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_dispx.fig']);
         figure(2); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_dispy.fig']);
         figure(3); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_dispz.fig']);
@@ -752,7 +755,7 @@ for ImgSeqNum = 2:length(fileNameAll)
         figure(8); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_strainexz.fig']);
         figure(9); saveas(gcf,['fig_ImgSeqNum_',num2str(ImgSeqNum),'_straineyz.fig']);
     else
-        disp('=== Wrong input in DVCpara.plotEachComponentOrAll! ===')
+        disp('=== Wrong input in DVCpara.plotComponentIndividialOrAll! ===')
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
