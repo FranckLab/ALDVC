@@ -26,7 +26,7 @@ geometryFromMesh(dvcVOI,DT.Points',DT.ConnectivityList');
 %     GeometricOrder: 'quadratic'
 % ----------------------------------
 
-if strcmp(IndiOrAll,'Individual') == 1
+if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     
     % ------------------ e11 -----------------------
     figure, %subplot(1,1,1),

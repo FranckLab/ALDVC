@@ -1,7 +1,7 @@
 % ==============================================
 % function Plotdisp_show3 for 3D FEM data
 % ==============================================
-function Plotdisp03(U,coordinatesFEM,elementsFEM,IndiOrAll)
+function Plotdisp03(U,coordinatesFEM,elementsFEM,individualOrAll)
 
 % Generate model
 dvcVOI = createpde(1);
@@ -21,7 +21,7 @@ geometryFromMesh(dvcVOI,DT.Points',DT.ConnectivityList');
 % ----------------------------------
 
 
-if strcmp(IndiOrAll,'Individual') == 1
+if (strcmp(individualOrAll,'Individual')==1) || (strcmp(individualOrAll,'individual')==1)
     % plot dvcZOI domain
     % figure, pdegplot(dvcZOI,'FaceLabels','on','FaceAlpha',0.5); set(gca,'fontsize',18);title('ZOI body')
     figure,

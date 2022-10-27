@@ -1,4 +1,4 @@
-function [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,cc,qDICOrNot,Thr0,varargin)
+function [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,cc,qDICOrNot,medianFilterThreshold,varargin)
 % =========================================================================
 % removes outliers using the universal
 % outlier test based on
@@ -26,7 +26,6 @@ mSize = [M*N*L,1];
 % ============== qDIC bad points removal ===============
 % prompt = 'Input threshold for qDIC bad points removal:';
 % ccThreshold = input(prompt); % Thr = 50;
-% 
 if qDICOrNot == 1
     [cc, ccMask_] = removeBadCorrelations(cc,cc.ccThreshold,1,mSize);
     for ii = 1:2
@@ -45,11 +44,10 @@ end
 % figure, imagesc3(qDICppeRmList); caxis auto; colorbar;
 % prompt = 'Input threshold for median test:';
 % Thr = input(prompt); % Thr = 50;
-% 
-% end
+ 
 
 % ============== median test bad points removal ===============
-% MedianRes = zeros(M,N,L); % initialize medianresidual
+% medianRes = zeros(M,N,L); % initialize medianresidual
 % NormFluct = zeros(M,N,L,DIM); % initialize normalized functuration
 % b = 1;          % data-point neighborhood radius (commonly set to 1 or 2)
 % DVCeps = 0.1;      % estimated measurement noise level (in pixel units)
@@ -59,19 +57,19 @@ end
 %     
 %     % loop over all the data points (excluding border points)
 %     for tempk = 1+b : L-b
-% 	for tempi = 1+b : N-b
-% 	for tempj = 1+b : M-b
+% 	    for tempi = 1+b : N-b
+% 	    for tempj = 1+b : M-b
 %         Neigh = VelComp(tempj-b:tempj+b, tempi-b:tempi+b, tempk-b:tempk+b); % data neighborhood with center-point
 %         NeighCol = Neigh(:); % in column format
 %         NeighCol2 = [NeighCol(1: (2*b+1)^2*b+(2*b+1)*b+b); NeighCol((2*b+1)^2*b+(2*b+1)*b+b+2:end)];
 %                             % neighborhood excluding center-point
-%         MedianNeigh = median(NeighCol2); % median of the neighborhood
-%         Fluct = VelComp(tempj,tempi,tempk) - MedianNeigh; % fluctuation with respect to median
-%         Res = NeighCol2 - MedianNeigh;       % residual: neighborhood flucturation w.r.t median
-%         MedianRes = median(abs(Res));   % median (absolute) value of residual
-%         NormFluct(tempj,tempi,tempk,c) = abs(Fluct/(MedianRes+DVCeps)); % normalized fluctuation w.r.t. neighborhood mesian residual
-%     end
-% 	end
+%         medianNeigh = median(NeighCol2); % median of the neighborhood
+%         Fluct = VelComp(tempj,tempi,tempk) - medianNeigh; % fluctuation with respect to median
+%         Res = NeighCol2 - medianNeigh;       % residual: neighborhood flucturation w.r.t median
+%         medianRes = median(abs(Res));   % median (absolute) value of residual
+%         NormFluct(tempj,tempi,tempk,c) = abs(Fluct/(medianRes+DVCeps)); % normalized fluctuation w.r.t. neighborhood mesian residual
+%       end
+% 	    end
 %     end
 %     
 % end
@@ -86,24 +84,24 @@ epsilon = 0.1;
 normFluctMag =  normFluct{1}.^2 + normFluct{2}.^2 + normFluct{3}.^2;
 normFluctMag = sqrt(normFluctMag);
 
-MedFilterOrNot = 0;
-while MedFilterOrNot < 1
+MedFilterOrNot = 1;
+while MedFilterOrNot > 0
     
     figure, imagesc3(normFluctMag); caxis auto; colorbar;
-    if isempty(Thr0) || (Thr0 == 0) 
-        prompt = 'Input threshold for median test (Default value: 2): ';
+    if isempty(medianFilterThreshold) || (medianFilterThreshold==0) 
+        prompt = 'Input threshold for median test (default value: 2): ';
         Thr = input(prompt);  
     else
-        Thr = Thr0; 
-        if Thr0 == 0
+        Thr = medianFilterThreshold; 
+        if medianFilterThreshold == 0
             Thr = 2;
         end
     end
     try
-        RemoveOutliersList = find( normFluctMag > Thr); % detection criterion
+        RemoveOutliersList = find( normFluctMag > Thr ); % detection criterion
     catch
         Thr = 2;
-        RemoveOutliersList = find( normFluctMag > Thr); % detection criterion
+        RemoveOutliersList = find( normFluctMag > Thr ); % detection criterion
     end
                 
     % ============== remove bad points ===============
@@ -117,12 +115,12 @@ while MedFilterOrNot < 1
     figure, imagesc3(v2); colorbar; title('Displacement v','fontweight','normal');  
     figure, imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');  
     
-    if isempty(Thr0) || (Thr0 == 0) 
-        fprintf('Do you want to redo Median test: 0(Yes, redo it!); 1(No, it is good!)  \n');
+    if isempty(medianFilterThreshold) || (medianFilterThreshold == 0) 
+        fprintf('Do you want to redo median test: 0(No, it is good!); 1(Yes, redo it!);   \n');
         prompt = 'Input here: ';
         MedFilterOrNot = input(prompt);  
     else
-        MedFilterOrNot = 1; 
+        MedFilterOrNot = 0; 
     end
       
 end
@@ -131,12 +129,11 @@ end
 
 %% ============== Manual bad points removal ===============
 % Find some bad inital guess points
-ClearBadInitialPointsOrNot = 1;
-fprintf('Do you clear bad points by setting upper/lower bounds? (0-yes; 1-no)  \n');
+fprintf('Do you clear bad points by setting upper/lower bounds? (0-No; 1-Yes)  \n');
 prompt = 'Input here: ';
 ClearBadInitialPointsOrNot = input(prompt);
 
-while ClearBadInitialPointsOrNot == 0
+while ClearBadInitialPointsOrNot == 1
     
     prompt = 'What is your upper bound for x-displacement?';
     upperbound = input(prompt);
@@ -157,9 +154,9 @@ while ClearBadInitialPointsOrNot == 0
     lowerbound = input(prompt);
     [row6,~] = find(w2(:)<lowerbound);
     
-%     prompt = 'What is the bound for correlation function Phi?';
-%     lowerbound = input(prompt);
-%     [row7,col7,zrow7] = find(Phi<lowerbound);
+    % prompt = 'What is the bound for correlation function Phi?';
+    % lowerbound = input(prompt);
+    % [row7,col7,zrow7] = find(Phi<lowerbound);
     row7 = []; col7 = []; zrow7 = [];
     row  = [row1; row2; row3; row4; row5; row6; row7]; 
     [rowsub,colsub,zrowsub] = ind2sub([M,N,L], row);
@@ -180,7 +177,7 @@ while ClearBadInitialPointsOrNot == 0
     figure,imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');  
     % --------------------------------------
     
-    prompt = 'Do you clear bad points by setting upper/lower bounds? (0-yes; 1-no)';
+    prompt = 'Do you clear bad points by setting upper/lower bounds? (0-No; 1-Yes)';
     ClearBadInitialPointsOrNot = input(prompt);
     
 end
@@ -188,24 +185,28 @@ end
  
 u = inpaint_nans3(u2,0);
 v = inpaint_nans3(v2,0);
-w = inpaint_nans3(w2,0);
-% u = inpaintn(u2); v = inpaintn(v2); w = inpaintn(w2);
+w = inpaint_nans3(w2,0); 
 
 
 %% ===== Manually pointing bad points ======
-fprintf('Do you clear bad points by directly pointing bad points? (0-yes; 1-no(Recommended))  \n')
+fprintf('Do you clear bad points by directly pointing bad points? (0-No; 1-Yes)  \n')
 prompt = 'Input here: ';
 ClearBadInitialPointsOrNot = input(prompt);
-temp=ClearBadInitialPointsOrNot; ClearBadInitialPointsOrNotx=temp; ClearBadInitialPointsOrNoty=temp; ClearBadInitialPointsOrNotz=temp;
+temp = ClearBadInitialPointsOrNot; 
+ClearBadInitialPointsOrNotx=temp; ClearBadInitialPointsOrNoty=temp; ClearBadInitialPointsOrNotz=temp;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNotx == 0
-    for tempkk = 1:L % frame by frame
-        ClearBadInitialPointsOrNotx = 0;
+% Remove x-disp bad points
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+while ClearBadInitialPointsOrNotx==1
+    
+    for tempkk = 1:L %For each frame
+        ClearBadInitialPointsOrNotx = 1;
         
-        while ClearBadInitialPointsOrNotx == 0
+        while ClearBadInitialPointsOrNotx==1
             
-            % Have a look at surf plot
-            close all; figure, surf(u(:,:,tempkk)); colorbar; view(2); axis tight; title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            close all; figure, surf(u(:,:,tempkk)); colorbar; view(2); axis tight; 
+            title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
@@ -247,14 +248,15 @@ while ClearBadInitialPointsOrNotx == 0
                 w(row(tempi),col(tempi),zrow(tempi)) = NaN;
             end
             
-%             u = inpaint_nans3(u,1);
-%             v = inpaint_nans3(v,1);
-%             w = inpaint_nans3(w,1);
-            
-            close all; figure, surf(u(:,:,tempkk)); colorbar; axis tight; title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            % u = inpaint_nans3(u,1);
+            % v = inpaint_nans3(v,1);
+            % w = inpaint_nans3(w,1);
+
+            close all; figure, surf(u(:,:,tempkk)); colorbar; axis tight; 
+            title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more x-disp bad points? (o-yes; 1-no) Input here: ';
+            prompt = 'Do you point out more x-disp bad points? (0-No; 1-Yes). Input here: ';
             ClearBadInitialPointsOrNotx = input(prompt);
             
         end
@@ -267,18 +269,17 @@ v = inpaint_nans3(v,0);
 w = inpaint_nans3(w,0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fprintf('Do you clear bad points by directly pointing y-disp bad points? (0-yes; 1-no)  \n')
-% prompt = 'Input here: ';
-% ClearBadInitialPointsOrNot = input(prompt);
+% Remove y-disp bad points
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNoty == 0
-    for tempkk = 1:L % frame by frame
-        ClearBadInitialPointsOrNoty = 0;
-        
-        while ClearBadInitialPointsOrNoty == 0
+while ClearBadInitialPointsOrNoty==1
+
+    for tempkk = 1:L %For each frame
+        ClearBadInitialPointsOrNoty = 1;
+       
+        while ClearBadInitialPointsOrNoty==1
             
-            % Have a look at surf plot
-            close all; figure, surf(v(:,:,tempkk)); colorbar; view(2); axis tight; title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            close all; figure, surf(v(:,:,tempkk)); colorbar; view(2); axis tight; 
+            title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
@@ -320,14 +321,15 @@ while ClearBadInitialPointsOrNoty == 0
                 w(row(tempi),col(tempi),zrow(tempi)) = NaN;
             end
             
-%             u = inpaint_nans3(u,1);
-%             v = inpaint_nans3(v,1);
-%             w = inpaint_nans3(w,1);
+            % u = inpaint_nans3(u,1);
+            % v = inpaint_nans3(v,1);
+            % w = inpaint_nans3(w,1);
             
-            close all; figure, surf(v(:,:,tempkk)); colorbar; axis tight; title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            close all; figure, surf(v(:,:,tempkk)); colorbar; axis tight; 
+            title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more y-disp bad points? (o-yes; 1-no) Input here: ';
+            prompt = 'Do you point out more y-disp bad points? (0-No; 1-Yes). Input here: ';
             ClearBadInitialPointsOrNoty = input(prompt);
             
         end
@@ -340,18 +342,17 @@ w = inpaint_nans3(w,0);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fprintf('Do you clear bad points by directly pointing z-disp bad points? (0-yes; 1-no)  \n')
-% prompt = 'Input here: ';
-% ClearBadInitialPointsOrNotz = input(prompt);
+% Remove z-disp bad points
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNotz == 0
-    for tempkk = 1:L % frame by frame
-        ClearBadInitialPointsOrNotz = 0;
+while ClearBadInitialPointsOrNotz==1
+    for tempkk = 1:L %For each frame
+        ClearBadInitialPointsOrNotz = 1;
         
-        while ClearBadInitialPointsOrNotz == 0
+        while ClearBadInitialPointsOrNotz==1
             
             % Have a look at surf plot
-            close all; figure, surf(w(:,:,tempkk)); colorbar; view(2); axis tight; title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            close all; figure, surf(w(:,:,tempkk)); colorbar; view(2); axis tight; 
+            title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
@@ -397,10 +398,11 @@ while ClearBadInitialPointsOrNotz == 0
             %v = inpaint_nans3(v,1);
             %w = inpaint_nans3(w,1);
             
-            close all; figure, surf(w(:,:,tempkk)); colorbar; axis tight; title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+            close all; figure, surf(w(:,:,tempkk)); colorbar; axis tight; 
+            title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
             
             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more z-disp bad points? (o-yes; 1-no) Input here: ';
+            prompt = 'Do you point out more z-disp bad points? (0-No; 1-Yes). Input here: ';
             ClearBadInitialPointsOrNotz = input(prompt);
             
         end

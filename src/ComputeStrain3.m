@@ -9,19 +9,23 @@
 % ==================================
 
 switch DVCpara.MethodToComputeStrain
+
+    % ======================================
     case 0 % Direct output
         Rad = [0,0,0];
         FStrain = FLocal;  % JY!!! change intrisic coords to world coords
         FStraintemp = FStrain;
         
+    % ======================================
     case 1 % Finite difference method
         Rad = [1,1,1];
-        %D=funDerivativeOp3((M-2*Rad(1)),(N-2*Rad(2)),(L-2*Rad(3)),DVCpara.winstepsize); % D = sparse(4*(M-2*Rad)*(N-2*Rad), 2*(M-2*Rad)*(N-2*Rad));
+        % D=funDerivativeOp3((M-2*Rad(1)),(N-2*Rad(2)),(L-2*Rad(3)),DVCpara.winstepsize); % D = sparse(4*(M-2*Rad)*(N-2*Rad), 2*(M-2*Rad)*(N-2*Rad));
         D2=funDerivativeOp3(MNL(1),MNL(2),MNL(3),DVCpara.winstepsize); 
         [temp3,temp4] = funFDNeumannBCInd3(size(DVCmesh.coordinatesFEM,1),[M,N,L],Rad); % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
-        temp = D2*ULocal; FStraintemp = FLocal(temp3);
+        FLocal = D2*ULocal; FStraintemp = FLocal(temp3);
         FStrain = FLocal; FStrain(temp3) = FStraintemp;
  
+    % ======================================
     case 2 % Plane fitting method
         D = funDerivativeOp3(M,N,L,DVCpara.winstepsize); % D = sparse(4*M*N, 2*M*N);
         FStrain = D*reshape(ULocal,length(ULocal),1); % JY!!! change intrisic coords to world coords
@@ -56,7 +60,8 @@ switch DVCpara.MethodToComputeStrain
             temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
         end
         FStrain(temp3) = FStraintemp;
-        
+       
+    % ======================================
     case 3 % Finite element method
         
         GaussPtOrder=2; [FStrain,~,~] = funGlobal_NodalStrainAvg3(coordinatesFEM,elementsFEM,ULocal,GaussPtOrder);
@@ -72,8 +77,10 @@ switch DVCpara.MethodToComputeStrain
             temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
         end
         FStraintemp = FStrain(temp3);
-        
+     
+    % ======================================
     otherwise
+        
         disp('Wrong Input to compute strain field!')
         
 end
@@ -89,9 +96,11 @@ for tempi = 1:9:length(FStrain)
     dudz = FStrain(tempi+6); dvdz = FStrain(tempi+7); dwdz = FStrain(tempi+8); 
     
     switch DVCpara.StrainType
+        % ======================================
         case 0 % Infinitesimal stran
             % Do nothing
             
+        % ======================================
         case 1 % Eluerian strain
             FStrainFinite(tempi) = 1/(1-dudx)-1; FStrainFinite(tempi+1) = dvdx/(1-dudx); FStrainFinite(tempi+2) = dwdx/(1-dudx);
             FStrainFinite(tempi+3) = dudy/(1-dvdy); FStrainFinite(tempi+4) = 1/(1-dvdy)-1; FStrainFinite(tempi+5) = dwdy/(1-dvdy);
@@ -100,6 +109,7 @@ for tempi = 1:9:length(FStrain)
             % Don't modify this line
             FStraintemp = FStrainFinite(temp3);
             
+        % ======================================
         case 2 % Green-Lagrangian strain: E=(C-I)/2
             tempF = [1+dudx, dudy, dudz; dvdx, 1+dvdy, dvdz; dwdx, dwdy, 1+dwdz];
             tempC = tempF'*tempF;
@@ -116,43 +126,12 @@ for tempi = 1:9:length(FStrain)
              
             % Don't modify this line
             FStraintemp = FStrainFinite(temp3);
-            
-        case 3 % Principal strains (for infinitesimal strains)
-            tempDU = [dudx, dudy, dudz; dvdx, dvdy, dvdz; dwdx, dwdy, dwdz];
-            tempPrincipalStrain = eig(tempDU);
-            FStrainFinite(tempi) = tempPrincipalStrain(1);
-            FStrainFinite(tempi+1) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
-            FStrainFinite(tempi+2) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+3) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
-            FStrainFinite(tempi+4) = tempPrincipalStrain(2);
-            FStrainFinite(tempi+5) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+6) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+7) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+8) = tempPrincipalStrain(3);
-            if tempi == 1 % Only print following lines once.
-                disp('Final plotted principal infinitesimal strains are: ');
-                disp('  Subplot(1,1): Principal strain e1');
-                disp('  Subplot(1,2): Principal strain e2');
-                disp('  Subplot(1,3): Principal strain e3');
-                disp('  Subplot(2,1): Max shear (e1-e2)/2');
-                disp('  Subplot(2,2): Max shear (e1-e3)/2');
-                disp('  Subplot(2,3): Max shear (e2-e3)/2');
-                disp('  ');
-                disp('Final saved principal infinitesimal strains are: ');
-                disp('  ResultStrain.Strain(1:9:end) --> e1');
-                disp('  ResultStrain.Strain(2:9:end) --> (e1-e2)/2');
-                disp('  ResultStrain.Strain(3:9:end) --> (e1-e3)/2');
-                disp('  ResultStrain.Strain(4:9:end) --> (e1-e2)/2');
-                disp('  ResultStrain.Strain(5:9:end) --> e2');
-                disp('  ResultStrain.Strain(6:9:end) --> (e2-e3)/2');
-                disp('  ResultStrain.Strain(7:9:end) --> (e1-e3)/2');
-                disp('  ResultStrain.Strain(8:9:end) --> (e2-e3)/2');
-                disp('  ResultStrain.Strain(9:9:end) --> e3');
-                disp('  ');
-            end
-        case 4
+         
+        % ======================================
+        case 3
             disp('Press "Ctrl+C" to modify codes by yourself.'); pause;
-            
+          
+        % ======================================
         otherwise
             disp('Wrong strain type!');
     end
@@ -179,4 +158,3 @@ end
 %     temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
 % end
 % FStraintemp = FStrain(temp3);
-
