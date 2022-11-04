@@ -138,8 +138,8 @@ switch paraName
     
     case 'strainCalculationMethod' % Choose strain computation method  
         fprintf('What method to use to compute strain? \n');
-        fprintf('    0: Direct output from ALDVC (by default); \n');
-        fprintf('    1: Finite difference; \n');
+        fprintf('    0: Direct output from ALDVC (only works for cumulative tracking mode); \n');
+        fprintf('    1: Finite difference (by default); \n');
         fprintf('    2: Plane fitting; \n');
         fprintf('    3: Finite element; \n');
         prompt = 'Input here: ';
@@ -147,8 +147,8 @@ switch paraName
         while (MethodToComputeStrain ~= 0) && (MethodToComputeStrain ~= 1) && (MethodToComputeStrain ~= 2) && (MethodToComputeStrain ~= 3)
             disp('****** Wrong input! ******')
             fprintf('What method to use to compute strain? \n');
-            fprintf('    0: Direct output from ALDIC (by default); \n');
-            fprintf('    1: Finite difference; \n');
+            fprintf('    0: Direct output from ALDIC (only works for cumulative tracking mode); \n');
+            fprintf('    1: Finite difference (by default); \n');
             fprintf('    2: Plane fitting; \n');
             fprintf('    3: Finite element; \n');
             prompt = 'Input here: ';
@@ -176,7 +176,7 @@ switch paraName
             prompt = 'Input here: ';
             strainType = input(prompt);
         end
-        paraInput = [strainType];
+        paraInput = strainType;
             
     case 'plotComponentIndividialOrAll'
         fprintf('Plot displacement & strain components individually or all together? \n');

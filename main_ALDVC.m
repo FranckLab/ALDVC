@@ -26,7 +26,7 @@ fprintf('------------ Section 1 Done ------------ \n \n')
 fprintf('------------ Section 2 Start ------------ \n')
 
 % ====== Pre-load images ======
-fileName = 'vol_Sample14*.mat';  fileFolder = './DVC_images/'; %Change "filename" and "fileFolder" by yourself
+fileName = 'Time*.mat';  fileFolder = './DVC_images/vol_Quasistatic_PAinMineralOil/'; %Change "filename" and "fileFolder" by yourself
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
         cd(fileFolder); %Open "fileFolder" if it is a valid path
@@ -39,11 +39,10 @@ end; catch; end %Skip this step if "fileFolder" is not a valid path
 %%%%%%% which will require a large RAM space: 
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
 end; catch; end %Skip this step if "fileFolder" is not a valid path 
 
 % ====== Define DVC parameters ======
-DVCpara.trackingMode = 'cumulative';  %Tracking mode: choose from {'cumulative':, 'incremental'}
 DVCpara.interpMethod = 'cubic';       %Grayscale interpolation scheme: choose from {'linear','cubic'(default),'spline'}
 DVCpara.displayIterOrNot = 0;         %Display Section 4 local DVC IC-GN iteration convergence {0:N; 1:Y}
 DVCpara.Subpb1ICGNMaxIterNum = 100;   %Maximum IC-GN iterations in local DVC and ADMM Subpb1 (see our original paper for more info about ADMM)
@@ -66,17 +65,21 @@ ResultDefGrad = cell(ImgSeqLength-1,1);         %To store solved deformation gra
 ResultStrain = cell(ImgSeqLength-1,1);          %To store solved strain after Section 8
 ResultMuBeta = cell(ImgSeqLength-1,1);          %To store parameters mu and beta used in ADMM Subpb2
 ResultConvItPerEle = cell(ImgSeqLength-1,1);    %To store local and Subpb1 ICGN iteration #
-ResultSizeOfFFTSearch = cell(ImgSeqLength-1,1); %To store the size of the initial guess search area
 
+%%%%%%% To store DVC-FE-mesh information %%%%%%%
+% coordinatesFEM          % DVC-FE-mesh nodal points coordinates
+% elementsFEM             % DVC-FE-mesh elements (node connectivities)
+% xyz0                    % DVC-FE-mesh gridded nodal points coordinates
+% sizeOfFFTSearchRegion   % Size of the initial guess search area
+% gridxyzROIRange         % Xyz-coordinates for region of interest 
 if strcmp(DVCpara.trackingMode,'cumulative')==1 %%%%%% (i) Cumulative tracking mode %%%%%%
-    ResultFEMeshEachFrame = cell(1,1);          %To store FE-mesh coordinates and elements
-    % ResultCoordinatesFEM = [];                %To store DVC-FE-mesh nodal points coordinates
-    % ResultElementsFEM = [];                   %To store DVC-FE-mesh elements (node connectivities)
+    ResultFEMeshEachFrame = cell(1,1);          %To store FE-mesh coordinates and elements    
 elseif strcmp(DVCpara.trackingMode,'incremental')==1  %%%%%% (ii) Incremental tracking mode %%%%%%    
     ResultFEMeshEachFrame = cell(ImgSeqLength-1,1); %To store FE-mesh coordinates and elements
 else %%%%%% (iii) Unknown tracking mode
     disp('Unknown tracking mode: please check "DVCpara.trackingMode!"');
 end
+
 fprintf('------------ Section 2 Done ------------ \n \n')
  
 
@@ -99,17 +102,20 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
 
         Img{1} = ImgNormalized{1}; %The first frame is reference, undeformed image stack
 
-        load(fileNameAll{ImgSeqNum}); Img_temp{1} = vol{1}; %Load current frame
+        load(fileNameAll{ImgSeqNum}); %Load current frame
+        try Img_temp{1} = vol{1}; catch Img_temp{1} = vol; end 
         [ImgNormalized_temp,~] = funNormalizeImg3(Img_temp,DVCpara.gridRange,'normalize'); %Normalize image
         Img{2} = ImgNormalized_temp{1}; clear Img_temp ImgNormalized_temp;
 
     elseif strcmp(DVCpara.trackingMode,'incremental')==1  %%%%%% (ii) Incremental tracking mode %%%%%%
 
-        load(fileNameAll{ImgSeqNum-1}); Img_temp{1} = vol{1}; %Load previous frame
+        load(fileNameAll{ImgSeqNum-1}); %Load previous frame
+        try Img_temp{1} = vol{1}; catch Img_temp{1} = vol; end 
         [ImgNormalized_temp,~] = funNormalizeImg3(Img_temp,DVCpara.gridRange,'normalize'); %Normalize image
         Img{1} = ImgNormalized_temp{1}; clear Img_temp ImgNormalized_temp;
 
-        load(fileNameAll{ImgSeqNum}); Img_temp{1} = vol{1}; %Load current frame
+        load(fileNameAll{ImgSeqNum}); %Load current frame
+        try Img_temp{1} = vol{1}; catch Img_temp{1} = vol; end 
         [ImgNormalized_temp,~] = funNormalizeImg3(Img_temp,DVCpara.gridRange,'normalize'); %Normalize image
         Img{2} = ImgNormalized_temp{1}; clear Img_temp ImgNormalized_temp;
 
@@ -119,7 +125,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     % -----------------------------
 
     try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
     end; catch; end %Skip this step if "fileFolder" is not a valid path 
  
 
@@ -136,17 +142,32 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
         DVCpara.sizeOfFFTSearchRegion = sizeOfFFTSearchRegion; toc
 
         % ======== Find some bad inital guess points ========
-        cc.ccThreshold = 1.25; %Cross-correlation coefficient threshold = (mean - ccThreshold*stdev for q-factor distribution) 
-        DVCpara.qDICOrNot = 0; %Whether to apply the qDIC strategy to remove local bad points after cross-correlation 
-        DVCpara.medianFilterThreshold = 0; %Median filter threshold
-        [uvw,cc] = RemoveOutliers3(uvw0,cc,DVCpara.qDICOrNot,DVCpara.medianFilterThreshold); %Last term is the threshold value
+        if strcmp(DVCpara.trackingMode,'cumulative')==1 %%%%%% (i) Cumulative tracking mode %%%%%%
+            cc.ccThreshold = 1.25; %Cross-correlation coefficient threshold = (mean - ccThreshold*stdev for q-factor distribution)
+            DVCpara.qDICOrNot = 0; %Whether to apply the qDIC strategy to remove local bad points after cross-correlation
+            DVCpara.medianFilterThreshold = 0; %Median filter threshold
+            DVCpara.uvwUpperAndLowerBounds = []; %Upper and lower bounds of displacement components
+
+            [uvw,cc] = RemoveOutliers3(uvw0,cc,DVCpara.qDICOrNot,DVCpara.medianFilterThreshold,DVCpara.uvwUpperAndLowerBounds);  
+
+        elseif strcmp(DVCpara.trackingMode,'incremental')==1 %%%%%% (ii) Incremental tracking mode %%%%%%
+            cc.ccThreshold = 1.25; %Cross-correlation coefficient threshold = (mean - ccThreshold*stdev for q-factor distribution)
+            DVCpara.qDICOrNot = 0; %Whether to apply the qDIC strategy to remove local bad points after cross-correlation
+            DVCpara.medianFilterThreshold = 2; %Median filter threshold
+            DVCpara.uvwUpperAndLowerBounds = zeros(6,1); %Upper and lower bounds of displacement components
+
+            [uvw,cc] = RemoveOutliers3(uvw0,cc,DVCpara.qDICOrNot,DVCpara.medianFilterThreshold,DVCpara.uvwUpperAndLowerBounds);
+
+        else %%%%%% (iii) Unknown tracking mode
+            disp('Unknown tracking mode: please check "DVCpara.trackingMode!"');
+        end
 
         % ====== DVC-FE-mesh set up ======
         [DVCmesh] = MeshSetUp3(xyz0,DVCpara); %Generate 3D DVC-mesh 
 
         % ====== Assign initial values ======
         U0 = Init3(uvw,DVCmesh.xyz0); %Initialize the deformation displacement: [..., U0_pti_x, U0_pti_y, U0_pyi_z, ...]
-        Plotdisp_show3(U0,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM); %Plot displacement fields
+        Plotdisp3(U0,DVCmesh.coordinatesFEM); %Plot displacement fields
     
         % ====== Save DVC-FE-mesh ======
         %%%%%% (i) Cumulative tracking mode %%%%%%
@@ -157,14 +178,14 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
                 ResultFEMeshEachFrame{1} = struct( ...
                 'coordinatesFEM',DVCmesh.coordinatesFEM,'elementsFEM',DVCmesh.elementsFEM, ...
                 'xyz0',xyz0,'winsize',DVCpara.winsize,'winstepsize',DVCpara.winstepsize, ...
-                'gridxyROIRange',DVCpara.gridRange,'sizeOfFFTSearchRegion',sizeOfFFTSearchRegion);
+                'gridxyzROIRange',DVCpara.gridRange,'sizeOfFFTSearchRegion',sizeOfFFTSearchRegion);
             end
         %%%%%% (ii) Incremental tracking mode %%%%%%
         elseif strcmp(DVCpara.trackingMode,'incremental')==1  
             ResultFEMeshEachFrame{ImgSeqNum-1} = struct( ...
                 'coordinatesFEM',DVCmesh.coordinatesFEM,'elementsFEM',DVCmesh.elementsFEM, ...
                 'xyz0',xyz0,'winsize',DVCpara.winsize,'winstepsize',DVCpara.winstepsize, ...
-                'gridxyROIRange',DVCpara.gridRange,'sizeOfFFTSearchRegion',sizeOfFFTSearchRegion);
+                'gridxyzROIRange',DVCpara.gridRange,'sizeOfFFTSearchRegion',sizeOfFFTSearchRegion);
         else %%%%%% (iii) Unknown tracking mode
             disp('Unknown tracking mode: please check "DVCpara.trackingMode!"');
         end
@@ -212,7 +233,8 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     MNL = size(DVCmesh.xyz0.x); uvw.u = reshape(USubpb1(1:3:end),MNL); 
     uvw.v = reshape(USubpb1(2:3:end),MNL); uvw.w = reshape(USubpb1(3:3:end),MNL); 
 
-    [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,[],DVCpara.qDICOrNot,DVCpara.medianFilterThreshold);
+    [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,[],DVCpara.qDICOrNot,DVCpara.medianFilterThreshold,DVCpara.uvwUpperAndLowerBounds);
+ 
     USubpb1 = [uvw.u(:),uvw.v(:),uvw.w(:)]'; USubpb1 = USubpb1(:); FSubpb1 = FSubpb1(:);
     for tempi = 0:8
         FSubpb1(9*RemoveOutliersList-tempi) = nan;
@@ -222,10 +244,10 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ------ Plot & save variables ------
-    close all; Plotdisp_show3(USubpb1,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);  %Plot displacement fields
-    Plotstrain_show3(FSubpb1,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);           %Plot small strain fields
-    save(['Subpb1_step',num2str(ALADMMIterStep)],'USubpb1','FSubpb1');              %Save solved results: U & F
-    U_accumICGN = USubpb1; F_accumICGN = FSubpb1; %Also save these results for future comparison since they are from the conventional DVC method
+    close all; Plotdisp3(USubpb1,DVCmesh.coordinatesFEM);  %Plot displacement fields
+    Plotstrain3(FSubpb1,DVCmesh.coordinatesFEM);           %Plot small strain fields
+    save(['Subpb1_step',num2str(ALADMMIterStep)],'USubpb1','FSubpb1');  %Save solved results: U & F
+    U_local_ICGN = USubpb1; F_local_ICGN = FSubpb1; %Also save these results for future comparison since they are from the conventional DVC method
     fprintf('------------ Section 4 Done ------------ \n \n')
      
     
@@ -343,12 +365,9 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     save(['Subpb2_step',num2str(ALADMMIterStep)],'USubpb2','FSubpb2');
 
     % ------ Plot ------
-    Plotdisp_show3(USubpb2,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);
-    Plotstrain_show3(FSubpb2,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);
-    % Or try these codes for a tight view:
-    % Plotdisp03(USubpb2,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM,'All');
-    % Plotstrain03(full(FSubpb2),xyz0.x,xyz0.y,xyz0.z,size(Img{1}),'All');
-    
+    Plotdisp3(USubpb2,DVCmesh.coordinatesFEM);
+    Plotstrain3(FSubpb2,DVCmesh.coordinatesFEM);
+     
     % ======= Update dual variables =======
     if strcmp(DVCpara.Subpb2FDOrFEM,'finiteDifference') == 1 %Using the finite different method
         udualtemp1 = (FSubpb2 - FSubpb1); udualtemp2 = udualtemp1(notNeumannBCInd_F);
@@ -399,7 +418,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
         % MNL = size(DVCmesh.xyz0.x); uvw.u = reshape(USubpb1(1:3:end),MNL); 
         % uvw.v = reshape(USubpb1(2:3:end),MNL); uvw.w = reshape(USubpb1(3:3:end),MNL);
         % 
-        % [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,[],DVCpara.qDICOrNot,DVCpara.medianFilterThreshold);
+        % [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,[],DVCpara.qDICOrNot,DVCpara.medianFilterThreshold,DVCpara.uvwUpperAndLowerBounds);
         % USubpb1 = [uvw.u(:),uvw.v(:),uvw.w(:)]'; USubpb1 = USubpb1(:); FSubpb1 = FSubpb1(:);
         % for tempi = 0:8
         %     FSubpb1(9*RemoveOutliersList-tempi) = nan;
@@ -451,7 +470,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
         USubpb1_New = load(['Subpb1_step',num2str(ALADMMIterStep)],'USubpb1');
 
         % Check ADMM convergence
-        if (ImgSeqNum>2) 
+        if (ALADMMIterStep>1) 
             Update_dispU_Subpb2 = norm((USubpb2_Old.USubpb2 - USubpb2_New.USubpb2), 2)/sqrt(size(USubpb2_Old.USubpb2,1));
             try
                 Update_dispU_Subpb1 = norm((USubpb1_Old.USubpb1 - USubpb1_New.USubpb1), 2)/sqrt(size(USubpb1_Old.USubpb1,1));
@@ -459,8 +478,8 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
             end
         end
         try
-            disp(['Updated U from the local step  = ',num2str(Update_dispU_Subpb1)]);
-            disp(['Updated U from the global step = ',num2str(Update_dispU_Subpb2)]);
+            disp(['Updated [U] from the local step  = ',num2str(Update_dispU_Subpb1)]);
+            disp(['Updated [U] from the global step = ',num2str(Update_dispU_Subpb2)]);
         catch
         end
         fprintf('*********************************** \n \n');
@@ -493,33 +512,55 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Plot and save data
     % ------ Plot ------
-    close all; Plotdisp_show3(USubpb2,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);
-    Plotstrain_show3(FSubpb1,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM);
+    close all; Plotdisp3(USubpb2,DVCmesh.coordinatesFEM);
+    Plotstrain3(FSubpb1,DVCmesh.coordinatesFEM);
 
     % ------ Try these codes for a tight view ------
     % Plotdisp03(USubpb2,DVCmesh.coordinatesFEM,DVCmesh.elementsFEM,'individual');
     % Plotstrain03(full(FSubpb2),xyz0.x,xyz0.y,xyz0.z,size(Img{1}),'individual');
     
-    ResultDisp{ImgSeqNum-1}.U = full(USubpb2);                %Store ALDVC displacement results
-    ResultDisp{ImgSeqNum-1}.U_accumICGN = full(U_accumICGN);    %Store Local Subset DVC results
-    ResultDisp{ImgSeqNum-1}.U0 = full(U0);                    %Store FFT-based cross correlation DVC results
+    ResultDisp{ImgSeqNum-1}.U = full(USubpb2);                      %Store ALDVC displacement results
+    ResultDisp{ImgSeqNum-1}.U_local_ICGN = full(U_local_ICGN);      %Store Local Subset DVC results
+    ResultDisp{ImgSeqNum-1}.U0_crosscorr = full(U0);                %Store FFT-based cross correlation DVC results
     
-    ResultDefGrad{ImgSeqNum-1}.F = full(FSubpb2);             %Store ALDVC displacement gradient results
-    ResultDefGrad{ImgSeqNum-1}.F_accumICGN = full(F_accumICGN); %Store Local Subset DVC (direct) results
+    ResultDefGrad{ImgSeqNum-1}.F = full(FSubpb2);                   %Store ALDVC displacement gradient results
+    ResultDefGrad{ImgSeqNum-1}.F_local_ICGN = full(F_local_ICGN);   %Store Local Subset DVC (direct) results
     
-    ResultMuBeta{ImgSeqNum-1}.beta = ALVarBeta;               %Store ADMM parameter "beta"
-    ResultMuBeta{ImgSeqNum-1}.mu = ALVarMu;                   %Store ADMM parameter "mu"
-    ResultConvItPerEle{ImgSeqNum-1}.ConvItPerEle = convIterPerEle; %Store ADMM Subpb1 ICGN iteration steps
+    ResultMuBeta{ImgSeqNum-1}.ALVarBeta = ALVarBeta;                %Store ADMM parameter "beta"
+    ResultMuBeta{ImgSeqNum-1}.ALVarMu = ALVarMu;                    %Store ADMM parameter "mu"
+    ResultConvItPerEle{ImgSeqNum-1}.ConvItPerEle = convIterPerEle;  %Store ADMM Subpb1 ICGN iteration steps
   
     
 end
- 
+
+
+%% Check ICGN convergence in ADMM iterations
+figure,
+for ImgSeqNum = 2 : length(fileNameAll)
+    convIterPerEle = ResultConvItPerEle{ImgSeqNum-1}.ConvItPerEle;
+    hold on; plot(ImgSeqNum,mean(convIterPerEle(:,1)),'ro','linewidth',1);
+    hold on; plot(ImgSeqNum,mean(convIterPerEle(:,2)),'b+','linewidth',1);
+    hold on; plot(ImgSeqNum,mean(convIterPerEle(:,3)),'c^','linewidth',1);
+    hold on; plot(ImgSeqNum,mean(convIterPerEle(:,4)),'ks','linewidth',1);
+end
+
+lgd = legend('ADMM Iter #1','ADMM Iter #2','ADMM Iter #3','ADMM Iter #4');
+set(gca,'fontsize',20); set(lgd,'fontsize',14); 
+xlabel('Frame #'); ylabel('ICGN iteration steps');
+
+
+
+for ImgSeqNum = 9
+    Plotdisp3(ResultDisp{ImgSeqNum-1}.U, ...
+        ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM,'all' );
+end
+
 
 %% Section 6'
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This section is to check that ADMM iterations are converged
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('------------ Section 7 Start ------------ \n')
+% fprintf("------------ Section 6' Start ------------ \n")
 % ====== Check convergence ======
 ALSolveStep1 = min(6,ALADMMIterStep);
 disp('====== |u^-u| ======');
@@ -557,7 +598,7 @@ for ALADMMIterStep = 2:ALSolveStep1
     Updatev = norm((uvdual_Old-uvdual_New), 2)/sqrt(length(uvdual_New));
     disp(num2str(Updatev));
 end
-fprintf('------------ Section 7 Done ------------ \n \n')
+% fprintf("------------ Section 6' Done ------------ \n \n")
 
 % ------ Uncomment these codes to delete temp files ------
 % for tempi = 1:ALSolveStep
@@ -584,7 +625,7 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
     tempz = ResultFEMeshEachFrame{1}.coordinatesFEM(:,3);
     coord = [tempx,tempy,tempz]; coordCurr = coord;
 
-    hbar = waitbar(0,'Calculate cumulative disp from incremental displacements'); %Initialize a waitbar
+    hbar = waitbar(0,'Calculate cumulative displacements from incremental displacements'); %Initialize a waitbar
 
     for ImgSeqNum = 2 : length(fileNameAll)
 
@@ -601,13 +642,23 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
         tempv = reshape( ResultDisp{ImgSeqNum-1}.U(2:3:end), MNL );
         tempw = reshape( ResultDisp{ImgSeqNum-1}.U(3:3:end), MNL );
 
-        disp_x = interp3(tempy,tempx,tempz,tempu,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' interpolation
-        disp_y = interp3(tempy,tempx,tempz,tempv,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' interpolation
-        disp_z = interp3(tempy,tempx,tempz,tempw,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' interpolation
+        % figure, coneplot(tempx ,tempy ,tempz , tempu, tempv, tempw );
 
-        disp_x = inpaint_nans3(reshape(disp_x,MNL),0);  %Fill NANs
-        disp_y = inpaint_nans3(reshape(disp_y,MNL),0);  %Fill NANs
-        disp_z = inpaint_nans3(reshape(disp_z,MNL),0);  %Fill NANs
+        disp_x = interp3(tempy,tempx,tempz,tempu,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' or 'spline' interpolation
+        disp_y = interp3(tempy,tempx,tempz,tempv,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' or 'spline' interpolation
+        disp_z = interp3(tempy,tempx,tempz,tempw,coordCurr(:,2),coordCurr(:,1),coordCurr(:,3),'makima'); %'makima' or 'spline' interpolation
+
+        disp_x(disp_x>10*DVCpara.imgSize(1)) = NaN;  disp_x(disp_x<-10*DVCpara.imgSize(1)) = NaN;
+        disp_y(disp_y>10*DVCpara.imgSize(2)) = NaN;  disp_y(disp_y<-10*DVCpara.imgSize(2)) = NaN;
+        disp_z(disp_z>10*DVCpara.imgSize(3)) = NaN;  disp_z(disp_z<-10*DVCpara.imgSize(3)) = NaN;
+
+        disp_x(disp_x>median(disp_x(:))+1*std(disp_x(:))) = NaN;  disp_x(disp_x<median(disp_x(:))-1*std(disp_x(:))) = NaN;
+        disp_y(disp_y>median(disp_y(:))+1*std(disp_y(:))) = NaN;  disp_y(disp_y<median(disp_y(:))-1*std(disp_y(:))) = NaN;
+        disp_z(disp_z>median(disp_z(:))+1*std(disp_z(:))) = NaN;  disp_z(disp_z<median(disp_z(:))-1*std(disp_z(:))) = NaN;
+
+        disp_x = inpaint_nans3(reshape(disp_x,MNL),1);  %Fill NANs
+        disp_y = inpaint_nans3(reshape(disp_y,MNL),1);  %Fill NANs
+        disp_z = inpaint_nans3(reshape(disp_z,MNL),1);  %Fill NANs
 
         coordCurr = coordCurr + [disp_x(:), disp_y(:), disp_z(:)]; %Calculate points current coordinates
         U_accum = (coordCurr - coord)'; %Calculate cumulative displacements
@@ -636,10 +687,9 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
     close(hbar); %Close the waitbar
  
 close all;
-for ImgSeqNum = 2 %Feel free to change image frame #
-    Plotdisp03(ResultDisp{ImgSeqNum-1}.U_accum, ...
-        ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM, ...
-        ResultFEMeshEachFrame{ImgSeqNum-1}.elementsFEM, 0);
+for ImgSeqNum = 30 %Feel free to change image frame #
+    Plotdisp3(ResultDisp{ImgSeqNum-1}.U_accum, ...
+        ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM);
 end
 
 end
@@ -651,7 +701,7 @@ fprintf('------------ Section 8 Start ------------ \n')
 % This section is to compute strain and plot figures
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ------ Convert units from pixels to physical world units ------
-DVCpara.um2px = funParaInput('convertUnit'); %um2px/mm2px/... ratio
+DVCpara.um2px = funParaInput('convertUnit'); %um2px/mm2px/... ratio [ratio_x, ratio_y, ratio_z]
 % ------ Smooth displacements ------
 DVCpara.doYouWantToSmoothOnceMore = funParaInput('smoothDispOrNot');
 % ------ Choose strain computation method ------
@@ -663,7 +713,7 @@ DVCpara.plotComponentIndividialOrAll = funParaInput('plotComponentIndividialOrAl
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ------ Start plotting part -----
-for ImgSeqNum = 2:length(fileNameAll)
+for ImgSeqNum = [ 2 : 1 : length(fileNameAll) ]
     
     disp(['Current frame #: ', num2str(ImgSeqNum),'/',num2str(length(fileNameAll))]);
     
@@ -676,7 +726,7 @@ for ImgSeqNum = 2:length(fileNameAll)
     %%%%%% (ii) Incremental tracking mode %%%%%%
     elseif strcmp(DVCpara.trackingMode,'incremental')==1  
         U_accum= ResultDisp{ImgSeqNum-1}.U_accum;
-        F_accum = 0*repmat(U_accum,2,1); %Initialize def. grad. tensors
+        F_accum = 0*repmat(U_accum,3,1); %Initialize def. grad. tensors
         coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
         elementsFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.elementsFEM;
     else %%%%%% (iii) Unknown tracking mode
@@ -709,35 +759,67 @@ for ImgSeqNum = 2:length(fileNameAll)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ----- Compute strain fields ------
     ComputeStrain3; %Execute this file to calculate strain fields.
+
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ----- Plot results -----
     close all;
     
     % ------ Plot disp ------
-    Plotdisp3(U_accum,DVCmesh.coordinatesFEM,DVCpara.plotComponentIndividialOrAll);
+    % Plotdisp3(U_accum,coordinatesFEM,DVCpara.plotComponentIndividialOrAll,turbo(16));
      
     % ------ Plot strain ------
-    %Plotstrain_show3(F_accum,coordinatesFEM,elementsFEM);
-    Plotstrain3(full(FStraintemp), ...
-        xyz0.x(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
-        xyz0.y(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
-        xyz0.z(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3)), ...
-        DVCpara.plotComponentIndividialOrAll);
+    % Delete strain values near VOI edges
+    x_crop_no_edges = 1+strainPlaneFittingHalfWidth(1) : M-strainPlaneFittingHalfWidth(1);
+    y_crop_no_edges = 1+strainPlaneFittingHalfWidth(2) : N-strainPlaneFittingHalfWidth(2);
+    z_crop_no_edges = 1+strainPlaneFittingHalfWidth(3) : L-strainPlaneFittingHalfWidth(3);
+
+    tempx = xyz0.x(x_crop_no_edges, y_crop_no_edges, z_crop_no_edges);
+    tempy = xyz0.y(x_crop_no_edges, y_crop_no_edges, z_crop_no_edges);
+    tempz = xyz0.z(x_crop_no_edges, y_crop_no_edges, z_crop_no_edges);
+
+    coordinatesFEM_crop_no_edges = [tempx(:), tempy(:), tempz(:)];
+
+    % Plotstrain3(full(FStrain_crop_no_edges), coordinatesFEM_crop_no_edges, ...
+    %             DVCpara.plotComponentIndividialOrAll,turbo(16));
     
     % ------ Store strain data ------
-    ResultStrain{ImgSeqNum-1}.Strain = FStraintemp;
-    tempx = xyz0.x(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3));
-    tempy = xyz0.y(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3));
-    tempz = xyz0.z(1+Rad(1):M-Rad(1),1+Rad(2):N-Rad(2),1+Rad(3):L-Rad(3));
-    ResultStrain{ImgSeqNum-1}.coordinatesFEMStrain = [tempx(:), tempy(:), tempz(:)]; 
+    ResultStrain{ImgSeqNum-1}.strain = FStrain_crop_no_edges;
+    ResultStrain{ImgSeqNum-1}.coordinatesFEMStrain = coordinatesFEM_crop_no_edges;
     
-    % % ------- Add filter and plot strain field -------
-    % Plotstrain_Fij;
-    % %caxis auto; load('colormap_RdYlBu.mat'); colormap(cMap)
-    % Plotstrain3(FStraintemp,xyz0.x(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),xyz0.y(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad), ...
-    %    xyz0.z(1+Rad:M-Rad,1+Rad:N-Rad,1+Rad:L-Rad),DVCpara.plotComponentIndividialOrAll);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % ----- Plot results in physical world unit -----
+    U_accum_World = ([ U_accum(1:3:end), U_accum(2:3:end), U_accum(3:3:end) ] * diag(DVCpara.um2px))';   
+    U_accum_World = U_accum_World(:);
+
+    coordinatesFEM_World = coordinatesFEM*diag(DVCpara.um2px);
+
+    coordinatesFEM_crop_no_edges_World = coordinatesFEM_crop_no_edges*diag(DVCpara.um2px);
+ 
+    FStrain_crop_no_edges_World = ([ FStrain_crop_no_edges(1:9:end), ... % du/dx
+        FStrain_crop_no_edges(2:9:end)*DVCpara.um2px(2)/DVCpara.um2px(1), ... % dv/dx
+        FStrain_crop_no_edges(3:9:end)*DVCpara.um2px(3)/DVCpara.um2px(1), ... % dw/dx
+        FStrain_crop_no_edges(4:9:end)*DVCpara.um2px(1)/DVCpara.um2px(2), ... % du/dy
+        FStrain_crop_no_edges(5:9:end), ... % dv/dy
+        FStrain_crop_no_edges(6:9:end)*DVCpara.um2px(3)/DVCpara.um2px(2), ... % dw/dy
+        FStrain_crop_no_edges(7:9:end)*DVCpara.um2px(1)/DVCpara.um2px(3), ... % du/dz
+        FStrain_crop_no_edges(8:9:end)*DVCpara.um2px(2)/DVCpara.um2px(3), ... % dv/dz
+        FStrain_crop_no_edges(9:9:end) ])'; % dw/dz
+
+    FStrain_crop_no_edges_World = FStrain_crop_no_edges_World(:);
+
+    % ------ Plot disp ------
+    Plotdisp3(U_accum_World,coordinatesFEM_World,DVCpara.plotComponentIndividialOrAll,turbo(16));
+
+    % ------ Plot strain ------
+    Plotstrain3(full(FStrain_crop_no_edges_World), coordinatesFEM_crop_no_edges_World, ...
+               DVCpara.plotComponentIndividialOrAll,turbo(16));
+
+    % ------ Store strain data ------
+    ResultStrain{ImgSeqNum-1}.strain_World = FStrain_crop_no_edges_World;
+    ResultStrain{ImgSeqNum-1}.coordinatesFEMStrain_World = coordinatesFEM_crop_no_edges_World;
     
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ------ Save figures ------
     % Write down your own codes to save figures! E.g.: % print(['fig_dispu'],'-dpdf');
@@ -765,9 +847,8 @@ fprintf('------------ Section 8 Done ------------ \n \n')
 
 %% Save data again including the computed strain 
 results_name = ['results_ws',num2str(DVCpara.winsize(1)),'_st',num2str(DVCpara.winstepsize(1)),'.mat'];
-save(results_name, 'file_name','DVCpara','DVCmesh','ResultDisp','ResultDefGrad','ResultStrain','ResultFEMesh',...
-    'ALSubpb1TimeCost','ALSubpb2TimeCost','ALADMMIterStep','ResultMuBeta','ResultConvItPerEle', ...
-    'ResultCoordinatesFEM','ResultElementsFEM','ResultSizeOfFFTSearch');
+save(results_name, 'fileNameAll','DVCpara','DVCmesh','ResultDisp','ResultDefGrad','ResultFEMeshEachFrame',...
+    'ResultConvItPerEle','ResultMuBeta','ResultStrain' );
 
   
 %% %%%%%%%%%%%%% Extensions for body and slice plottings %%%%%%%%%%%%%%%%
@@ -775,7 +856,116 @@ disp('Extensions for body and slice plottings'); pause;
 plotExt_bodyslice; % Feel free to modify this file (./PlotFiles/plotExt_bodyslice.m) on your purpose.
 
 
+%% If you want to calculate strain statistics for uniform deformations:
+for ImgSeqNum = 2 : length(fileNameAll)
 
+    coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
+
+    xList = min(coordinatesFEM(:,1)):DVCpara.winstepsize(1):max(coordinatesFEM(:,1)); M = length(xList);
+    yList = min(coordinatesFEM(:,2)):DVCpara.winstepsize(2):max(coordinatesFEM(:,2)); N = length(yList);
+    zList = min(coordinatesFEM(:,3)):DVCpara.winstepsize(3):max(coordinatesFEM(:,3)); L = length(zList);
+
+    Strain_World_temp = ResultStrain{ImgSeqNum-1}.strain_World;
+
+    M1=5; N1=5; L1=3;
+
+    Strain_11 = reshape(Strain_World_temp(1:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_11_crop = Strain_11(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_11_mean(ImgSeqNum) = mean(Strain_11_crop(:));
+    Strain_11_std(ImgSeqNum) = std(Strain_11_crop(:));
+
+    Strain_22 = reshape(Strain_World_temp(5:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_22_crop = Strain_22(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_22_mean(ImgSeqNum) = mean(Strain_22_crop(:));
+    Strain_22_std(ImgSeqNum) = std(Strain_22_crop(:));
+
+
+    Strain_33 = reshape(Strain_World_temp(9:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_33_crop = Strain_33(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_33_mean(ImgSeqNum) = mean(Strain_33_crop(:));
+    Strain_33_std(ImgSeqNum) = std(Strain_33_crop(:));
+
+    Strain_21 = reshape(Strain_World_temp(2:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_21_crop = Strain_21(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_12 = reshape(Strain_World_temp(4:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_12_crop = Strain_12(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_12_mean(ImgSeqNum) = mean(0.5*(Strain_12_crop(:) + Strain_21_crop(:)));
+    Strain_12_std(ImgSeqNum) = std(0.5*(Strain_12_crop(:) + Strain_21_crop(:)));
+
+    Strain_31 = reshape(Strain_World_temp(3:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_31_crop = Strain_31(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_13 = reshape(Strain_World_temp(7:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_13_crop = Strain_13(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_13_mean(ImgSeqNum) = mean(0.5*(Strain_13_crop(:) + Strain_31_crop(:)));
+    Strain_13_std(ImgSeqNum) = std(0.5*(Strain_13_crop(:) + Strain_31_crop(:)));
+
+    Strain_32 = reshape(Strain_World_temp(6:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_32_crop = Strain_32(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_23 = reshape(Strain_World_temp(8:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
+    Strain_23_crop = Strain_23(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
+    Strain_23_mean(ImgSeqNum) = mean(0.5*(Strain_23_crop(:) + Strain_32_crop(:)));
+    Strain_23_std(ImgSeqNum) = std(0.5*(Strain_23_crop(:) + Strain_32_crop(:)));
+
+    detF = (1+Strain_11_crop).*(1+Strain_22_crop).*(1+Strain_33_crop) + ...
+        Strain_12_crop.*Strain_23_crop.*Strain_31_crop + ...
+        Strain_13_crop.*Strain_21_crop.*Strain_32_crop - ...
+        Strain_31_crop.*Strain_22_crop.*Strain_13_crop - ...
+        Strain_32_crop.*Strain_23_crop.*Strain_11_crop - ...
+        Strain_33_crop.*Strain_21_crop.*Strain_12_crop;
+
+    detF_approx = (1+Strain_11_crop).^2.*(1+Strain_22_crop);
+
+    detF_mean(ImgSeqNum) = mean(detF(:));
+    detF_std(ImgSeqNum) = std(detF(:));
+
+    detF_approx_mean(ImgSeqNum) = mean(detF_approx(:));
+    detF_approx_std(ImgSeqNum) = std(detF_approx(:));
+
+    Poisson_ratio_21 = (Strain_11_crop)./(-Strain_22_crop);
+    Poisson_ratio_23 = (Strain_33_crop)./(-Strain_22_crop);
+    Poisson_ratio_21_mean(ImgSeqNum) = mean(Poisson_ratio_21(:));
+    Poisson_ratio_21_std(ImgSeqNum) = std(Poisson_ratio_21(:));
+    Poisson_ratio_23_mean(ImgSeqNum) = mean(Poisson_ratio_23(:));
+    Poisson_ratio_23_std(ImgSeqNum) = std(Poisson_ratio_23(:));
+    
+
+end
+
+%%%%%%%%% %TODO: modify these codes ...
+
+ImgNum1=2; ImgNum2=44; 
+figure,   errorbar( [ImgNum1:ImgNum2], Strain_11_mean(ImgNum1:ImgNum2), Strain_11_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_22_mean(ImgNum1:ImgNum2), Strain_22_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_33_mean(ImgNum1:ImgNum2), Strain_33_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_12_mean(ImgNum1:ImgNum2), Strain_12_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_13_mean(ImgNum1:ImgNum2), Strain_13_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_23_mean(ImgNum1:ImgNum2), Strain_23_std(ImgNum1:ImgNum2),'linewidth',1 );
+
+axis([2,44,-0.3,0.95])
+set(gca,'fontsize',20);
+xlabel('Frame #'); ylabel('Strain');
+
+lgd = legend('$e_{11}$','$e_{22}$','$e_{33}$','$e_{12}$','$e_{13}$','$e_{23}$','interpreter','latex');
+set(lgd,'location','northeastoutside'); set(lgd,'fontsize',16);
+
+figure, errorbar(Strain_22_mean(ImgNum1:ImgNum2), detF_mean(ImgNum1:ImgNum2), detF_std(ImgNum1:ImgNum2), 'k', 'linewidth',1  );
+set(gca,'fontsize',20);
+xlabel('$e_{22}$','interpreter','latex'); ylabel('det($\mathbf{F}$)','interpreter','latex');
+axis([0,0.9,1,1.45]);
+
+hold on; errorbar(Strain_22_mean(ImgNum1:ImgNum2), detF_approx_mean(ImgNum1:ImgNum2), detF_approx_std(ImgNum1:ImgNum2), 'b--', 'linewidth',1  );
+lgd = legend('exp','adjusted');
+set(lgd,'location','northwest'); set(lgd,'fontsize',16);
+
+
+figure, errorbar(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_21_mean(ImgNum1:ImgNum2), Poisson_ratio_21_std(ImgNum1:ImgNum2),'linewidth',1  );
+hold on, errorbar(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_23_mean(ImgNum1:ImgNum2), Poisson_ratio_23_std(ImgNum1:ImgNum2),'linewidth',1  );
+set(gca,'fontsize',20);
+xlabel('$e_{22}$','interpreter','latex'); ylabel("Poisson's ratio");
+axis([0,0.9,0,0.3]);
+
+lgd = legend('$-e_{11}/e_{22}$','$-e_{11}/e_{33}$','interpreter','latex');
+set(lgd,'location','northwest'); set(lgd,'fontsize',16);
 
 
 

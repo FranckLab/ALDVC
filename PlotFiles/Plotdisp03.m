@@ -1,7 +1,7 @@
 % ==============================================
 % function Plotdisp_show3 for 3D FEM data
 % ==============================================
-function Plotdisp3(U,coordinatesFEM,elementsFEM,individualOrAll)
+function Plotdisp03(U,coordinatesFEM,elementsFEM,individualOrAll)
 
 % Generate model
 dvcVOI = createpde(1);

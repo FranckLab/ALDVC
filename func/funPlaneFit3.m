@@ -1,4 +1,6 @@
 function [UNew,DUDX,DUDY,DUDZ] = funPlaneFit3(U,winsize,Rad,index)
+%FUNCTION funPlaneFit3(U,winsize,Rad,index)
+%T
 
 [M,N,L]=size(U); DUDY=U; DUDX=U; DUDZ=U; UNew=U; DIM=3;
  

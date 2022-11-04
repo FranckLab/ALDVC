@@ -1,23 +1,29 @@
-function [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,cc,qDICOrNot,medianFilterThreshold,varargin)
+function [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,cc,varargin)
+%FUNCTION RemoveOutlier3(uvw,cc,varargin)
 % =========================================================================
-% removes outliers using the universal
-% outlier test based on
+% To remove outliers using the universal outlier test based on:
 %
 % J. Westerweel and F. Scarano. Universal outlier detection for PIV data.
 % Exp. Fluids, 39(6):1096{1100, August 2005. doi: 10.1007/s00348-005-0016-6
 % -------------------------------------------------------------------------
+%   
+%   INPUT: uvw        Displacements: uvw.u = u; uvw.v = v; uvw.w = w;
+%          cc         Cross correlation values
+%          qDICOrNot  Whether to use q-factor to remove bad points or not
+%          medianFileterThreshold   
+%                     The threshold of a median filter to remove bad points
+%          uvwUpperAndLowerBounds
+%                     Upper and lower bounds of displacement components:
+%                     [u_min, u_max, v_min, v_max, w_min, w_max]
+%
+% =========================================================================
 % NOTES
 % -------------------------------------------------------------------------
 % needs medFilt3 and John D'Errico's inpaint_nans3 
 % (http://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint-nans)function. 
 % =========================================================================
 
-switch nargin
-    case 6
-        BadptRow = varargin{1}; BadptCol = varargin{2}; BadptZ = varargin{3};
-    otherwise
-        BadptRow = []; BadptCol = []; BadptZ = [];
-end
+[qDICOrNot,medianFilterThreshold,uvwUpperAndLowerBounds] = parseargs(varargin);
 
 u = uvw.u; v = uvw.v; w = uvw.w;
 DIM = 3; [M,N,L] = size(u);  % size of the displacement field
@@ -87,7 +93,8 @@ normFluctMag = sqrt(normFluctMag);
 MedFilterOrNot = 1;
 while MedFilterOrNot > 0
     
-    figure, imagesc3(normFluctMag); caxis auto; colorbar;
+    figure, imagesc3(normFluctMag); caxis auto; colorbar; title('norm of fluctuation')
+
     if isempty(medianFilterThreshold) || (medianFilterThreshold==0) 
         prompt = 'Input threshold for median test (default value: 2): ';
         Thr = input(prompt);  
@@ -110,15 +117,19 @@ while MedFilterOrNot > 0
     w2 = w; w2(qDICpceRmList) = NaN; u2(qDICppeRmList) = NaN; w2(RemoveOutliersList) = NaN;
     % u2 = inpaint_nans3(u2,1); v2 = inpaint_nans3(v2,1); w2 = inpaint_nans3(w2,1);
     % --------------------------------------
-    close all; 
-    figure, imagesc3(u2); colorbar; title('Displacement u','fontweight','normal');  
-    figure, imagesc3(v2); colorbar; title('Displacement v','fontweight','normal');  
-    figure, imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');  
-    
+     
     if isempty(medianFilterThreshold) || (medianFilterThreshold == 0) 
+
+        close all;
+        figure, imagesc3(u2); colorbar; title('Displacement u','fontweight','normal');
+        figure, imagesc3(v2); colorbar; title('Displacement v','fontweight','normal');
+        figure, imagesc3(w2); colorbar; title('Displacement w','fontweight','normal');
+        pause(0.1);
+
         fprintf('Do you want to redo median test: 0(No, it is good!); 1(Yes, redo it!);   \n');
         prompt = 'Input here: ';
         MedFilterOrNot = input(prompt);  
+
     else
         MedFilterOrNot = 0; 
     end
@@ -128,31 +139,55 @@ end
  
 
 %% ============== Manual bad points removal ===============
-% Find some bad inital guess points
-fprintf('Do you clear bad points by setting upper/lower bounds? (0-No; 1-Yes)  \n');
-prompt = 'Input here: ';
-ClearBadInitialPointsOrNot = input(prompt);
 
-while ClearBadInitialPointsOrNot == 1
+if isempty(uvwUpperAndLowerBounds)
+    % Whether to identify bad inital guess points or not
+    fprintf('Do you clear bad points by setting upper/lower bounds? (0-No; 1-Yes)  \n');
+    prompt = 'Input here: ';
+    ClearBadInitialPointsOrNot = input(prompt);
+else
+    ClearBadInitialPointsOrNot = 0;
+end
+
+if norm(uvwUpperAndLowerBounds)>0
+    x_min = uvwUpperAndLowerBounds(1); [row2,~] = find(u2(:)<x_min);
+    x_max = uvwUpperAndLowerBounds(2); [row1,~] = find(u2(:)>x_max);
+    y_min = uvwUpperAndLowerBounds(3); [row4,~] = find(v2(:)<y_min);
+    y_max = uvwUpperAndLowerBounds(4); [row3,~] = find(v2(:)>y_max);
+    z_min = uvwUpperAndLowerBounds(5); [row6,~] = find(w2(:)<z_min);
+    z_max = uvwUpperAndLowerBounds(6); [row5,~] = find(w2(:)>z_max);
+ 
+    row = [row1; row2; row3; row4; row5; row6 ]; 
+    [rowsub,colsub,zrowsub] = ind2sub([M,N,L], row);
+     RemoveOutliersList = [RemoveOutliersList;rowsub];
+    for tempi = 1:length(rowsub)
+        u2(rowsub(tempi),colsub(tempi),zrowsub(tempi))=NaN; 
+        v2(rowsub(tempi),colsub(tempi),zrowsub(tempi))=NaN;
+        w2(rowsub(tempi),colsub(tempi),zrowsub(tempi))=NaN;
+    end
+ 
+end
+
+while ClearBadInitialPointsOrNot==1
     
     prompt = 'What is your upper bound for x-displacement?';
-    upperbound = input(prompt);
-    [row1,~] = find(u2(:)>upperbound);
+    x_max = input(prompt);
+    [row1,~] = find(u2(:)>x_max);
     prompt = 'What is your lower bound for x-displacement?';
-    lowerbound = input(prompt);
-    [row2,~] = find(u2(:)<lowerbound);
+    x_min = input(prompt);
+    [row2,~] = find(u2(:)<x_min);
     prompt = 'What is your upper bound for y-displacement?';
-    upperbound = input(prompt);
-    [row3,~] = find(v2(:)>upperbound);
+    y_max = input(prompt);
+    [row3,~] = find(v2(:)>y_max);
     prompt = 'What is your lower bound for y-displacement?';
-    lowerbound = input(prompt);
-    [row4,~] = find(v2(:)<lowerbound);
+    y_min = input(prompt);
+    [row4,~] = find(v2(:)<y_min);
     prompt = 'What is your upper bound for z-displacement?';
-    upperbound = input(prompt);
-    [row5,~] = find(w2(:)>upperbound);
+    z_max = input(prompt);
+    [row5,~] = find(w2(:)>z_max);
     prompt = 'What is your lower bound for z-displacement?';
-    lowerbound = input(prompt);
-    [row6,~] = find(w2(:)<lowerbound);
+    z_min = input(prompt);
+    [row6,~] = find(w2(:)<z_min);
     
     % prompt = 'What is the bound for correlation function Phi?';
     % lowerbound = input(prompt);
@@ -181,7 +216,7 @@ while ClearBadInitialPointsOrNot == 1
     ClearBadInitialPointsOrNot = input(prompt);
     
 end
-
+ 
  
 u = inpaint_nans3(u2,0);
 v = inpaint_nans3(v2,0);
@@ -189,239 +224,263 @@ w = inpaint_nans3(w2,0);
 
 
 %% ===== Manually pointing bad points ======
-fprintf('Do you clear bad points by directly pointing bad points? (0-No; 1-Yes)  \n')
-prompt = 'Input here: ';
-ClearBadInitialPointsOrNot = input(prompt);
-temp = ClearBadInitialPointsOrNot; 
-ClearBadInitialPointsOrNotx=temp; ClearBadInitialPointsOrNoty=temp; ClearBadInitialPointsOrNotz=temp;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Remove x-disp bad points
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNotx==1
-    
-    for tempkk = 1:L %For each frame
-        ClearBadInitialPointsOrNotx = 1;
-        
-        while ClearBadInitialPointsOrNotx==1
-            
-            close all; figure, surf(u(:,:,tempkk)); colorbar; view(2); axis tight; 
-            title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            [row1,col1] = ginput; row = floor(col1); col = floor(row1);
-            % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
-            % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
-            % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
-            % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
-            % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
-            % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
-            % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
-            % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
-            
-            row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
-            row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
-            row331 = row; col331 = col; zrow331 = tempkk-1;
-            row332 = row; col332 = col; zrow332 = tempkk+1;
-            
-            zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
-            row = [row;col23;row32;row34;row43;row331;row332];
-            col = [col;col23;col32;col34;col43;col331;col332];
-            
-            BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
-            
-            [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
-            [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
-            tempindex1 = reshape(tempindex1,length(tempindex1),1);
-            tempindex2 = reshape(tempindex2,length(tempindex2),1);
-            tempindex3 = reshape(tempindex3,length(tempindex3),1);
-            tempindex4 = reshape(tempindex4,length(tempindex4),1);
-            tempindex5 = reshape(tempindex5,length(tempindex5),1);
-            tempindex6 = reshape(tempindex6,length(tempindex6),1);
-            tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
-                intersect(tempindex3,intersect(tempindex1,tempindex2))))));
-            
-            BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
-            
-            row = BadptRow; col = BadptCol; zrow = BadptZ;
-            for tempi = 1:length(row)
-                u(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                v(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                w(row(tempi),col(tempi),zrow(tempi)) = NaN;
-            end
-            
-            % u = inpaint_nans3(u,1);
-            % v = inpaint_nans3(v,1);
-            % w = inpaint_nans3(w,1);
-
-            close all; figure, surf(u(:,:,tempkk)); colorbar; axis tight; 
-            title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            
-            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more x-disp bad points? (0-No; 1-Yes). Input here: ';
-            ClearBadInitialPointsOrNotx = input(prompt);
-            
-        end
-        
-    end
-end
-
-u = inpaint_nans3(u,0);
-v = inpaint_nans3(v,0);
-w = inpaint_nans3(w,0);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Remove y-disp bad points
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNoty==1
-
-    for tempkk = 1:L %For each frame
-        ClearBadInitialPointsOrNoty = 1;
+% fprintf('Do you clear bad points by directly pointing bad points? (0-No; 1-Yes)  \n')
+% prompt = 'Input here: ';
+% ClearBadInitialPointsOrNot = input(prompt);
+% temp = ClearBadInitialPointsOrNot; 
+% ClearBadInitialPointsOrNotx=temp; ClearBadInitialPointsOrNoty=temp; ClearBadInitialPointsOrNotz=temp;
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Remove x-disp bad points
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% while ClearBadInitialPointsOrNotx==1
+%     
+%     for tempkk = 1:L %For each frame
+%         ClearBadInitialPointsOrNotx = 1;
+%         
+%         while ClearBadInitialPointsOrNotx==1
+%             
+%             close all; figure, surf(u(:,:,tempkk)); colorbar; view(2); axis tight; 
+%             title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
+%             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
+%             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
+%             % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
+%             % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
+%             % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
+%             % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
+%             % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
+%             % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
+%             
+%             row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
+%             row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
+%             row331 = row; col331 = col; zrow331 = tempkk-1;
+%             row332 = row; col332 = col; zrow332 = tempkk+1;
+%             
+%             zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
+%             row = [row;col23;row32;row34;row43;row331;row332];
+%             col = [col;col23;col32;col34;col43;col331;col332];
+%             
+%             BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
+%             
+%             [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
+%             [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
+%             tempindex1 = reshape(tempindex1,length(tempindex1),1);
+%             tempindex2 = reshape(tempindex2,length(tempindex2),1);
+%             tempindex3 = reshape(tempindex3,length(tempindex3),1);
+%             tempindex4 = reshape(tempindex4,length(tempindex4),1);
+%             tempindex5 = reshape(tempindex5,length(tempindex5),1);
+%             tempindex6 = reshape(tempindex6,length(tempindex6),1);
+%             tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
+%                 intersect(tempindex3,intersect(tempindex1,tempindex2))))));
+%             
+%             BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
+%             
+%             row = BadptRow; col = BadptCol; zrow = BadptZ;
+%             for tempi = 1:length(row)
+%                 u(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 v(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 w(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%             end
+%             
+%             % u = inpaint_nans3(u,1);
+%             % v = inpaint_nans3(v,1);
+%             % w = inpaint_nans3(w,1);
+% 
+%             close all; figure, surf(u(:,:,tempkk)); colorbar; axis tight; 
+%             title(['Displacement u at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             
+%             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
+%             prompt = 'Do you point out more x-disp bad points? (0-No; 1-Yes). Input here: ';
+%             ClearBadInitialPointsOrNotx = input(prompt);
+%             
+%         end
+%         
+%     end
+% end
+% 
+% u = inpaint_nans3(u,0);
+% v = inpaint_nans3(v,0);
+% w = inpaint_nans3(w,0);
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Remove y-disp bad points
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% while ClearBadInitialPointsOrNoty==1
+% 
+%     for tempkk = 1:L %For each frame
+%         ClearBadInitialPointsOrNoty = 1;
+%        
+%         while ClearBadInitialPointsOrNoty==1
+%             
+%             close all; figure, surf(v(:,:,tempkk)); colorbar; view(2); axis tight; 
+%             title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
+%             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
+%             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
+%             % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
+%             % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
+%             % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
+%             % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
+%             % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
+%             % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
+%             
+%             row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
+%             row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
+%             row331 = row; col331 = col; zrow331 = tempkk-1;
+%             row332 = row; col332 = col; zrow332 = tempkk+1;
+%             
+%             zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
+%             row = [row;col23;row32;row34;row43;row331;row332];
+%             col = [col;col23;col32;col34;col43;col331;col332];
+%             
+%             BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
+%             
+%             [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
+%             [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
+%             tempindex1 = reshape(tempindex1,length(tempindex1),1);
+%             tempindex2 = reshape(tempindex2,length(tempindex2),1);
+%             tempindex3 = reshape(tempindex3,length(tempindex3),1);
+%             tempindex4 = reshape(tempindex4,length(tempindex4),1);
+%             tempindex5 = reshape(tempindex5,length(tempindex5),1);
+%             tempindex6 = reshape(tempindex6,length(tempindex6),1);
+%             tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
+%                 intersect(tempindex3,intersect(tempindex1,tempindex2))))));
+%             
+%             BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
+%             
+%             row = BadptRow; col = BadptCol; zrow = BadptZ;
+%             for tempi = 1:length(row)
+%                 u(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 v(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 w(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%             end
+%             
+%             % u = inpaint_nans3(u,1);
+%             % v = inpaint_nans3(v,1);
+%             % w = inpaint_nans3(w,1);
+%             
+%             close all; figure, surf(v(:,:,tempkk)); colorbar; axis tight; 
+%             title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             
+%             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
+%             prompt = 'Do you point out more y-disp bad points? (0-No; 1-Yes). Input here: ';
+%             ClearBadInitialPointsOrNoty = input(prompt);
+%             
+%         end
+%     end
+% end
+% 
+% u = inpaint_nans3(u,0);
+% v = inpaint_nans3(v,0);
+% w = inpaint_nans3(w,0);
+% 
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Remove z-disp bad points
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% while ClearBadInitialPointsOrNotz==1
+%     for tempkk = 1:L %For each frame
+%         ClearBadInitialPointsOrNotz = 1;
+%         
+%         while ClearBadInitialPointsOrNotz==1
+%             
+%             % Have a look at surf plot
+%             close all; figure, surf(w(:,:,tempkk)); colorbar; view(2); axis tight; 
+%             title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             [row1,col1] = ginput; row = floor(col1); col = floor(row1);
+%             % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
+%             % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
+%             % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
+%             % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
+%             % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
+%             % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
+%             % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
+%             % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
+%             
+%             row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
+%             row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
+%             row331 = row; col331 = col; zrow331 = tempkk-1;
+%             row332 = row; col332 = col; zrow332 = tempkk+1;
+%             
+%             zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
+%             row = [row;col23;row32;row34;row43;row331;row332];
+%             col = [col;col23;col32;col34;col43;col331;col332];
+%             
+%             BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
+%             
+%             [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
+%             [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
+%             tempindex1 = reshape(tempindex1,length(tempindex1),1);
+%             tempindex2 = reshape(tempindex2,length(tempindex2),1);
+%             tempindex3 = reshape(tempindex3,length(tempindex3),1);
+%             tempindex4 = reshape(tempindex4,length(tempindex4),1);
+%             tempindex5 = reshape(tempindex5,length(tempindex5),1);
+%             tempindex6 = reshape(tempindex6,length(tempindex6),1);
+%             tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
+%                 intersect(tempindex3,intersect(tempindex1,tempindex2))))));
+%             
+%             BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
+%             
+%             row = BadptRow; col = BadptCol; zrow = BadptZ;
+%             for tempi = 1:length(row)
+%                 u(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 v(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%                 w(row(tempi),col(tempi),zrow(tempi)) = NaN;
+%             end
+%             
+%             %u = inpaint_nans3(u,1);
+%             %v = inpaint_nans3(v,1);
+%             %w = inpaint_nans3(w,1);
+%             
+%             close all; figure, surf(w(:,:,tempkk)); colorbar; axis tight; 
+%             title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
+%             
+%             %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
+%             prompt = 'Do you point out more z-disp bad points? (0-No; 1-Yes). Input here: ';
+%             ClearBadInitialPointsOrNotz = input(prompt);
+%             
+%         end
+%         
+%     end
+% end
+% 
+% u = inpaint_nans3(u,0);
+% v = inpaint_nans3(v,0);
+% w = inpaint_nans3(w,0);
        
-        while ClearBadInitialPointsOrNoty==1
-            
-            close all; figure, surf(v(:,:,tempkk)); colorbar; view(2); axis tight; 
-            title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            [row1,col1] = ginput; row = floor(col1); col = floor(row1);
-            % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
-            % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
-            % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
-            % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
-            % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
-            % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
-            % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
-            % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
-            
-            row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
-            row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
-            row331 = row; col331 = col; zrow331 = tempkk-1;
-            row332 = row; col332 = col; zrow332 = tempkk+1;
-            
-            zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
-            row = [row;col23;row32;row34;row43;row331;row332];
-            col = [col;col23;col32;col34;col43;col331;col332];
-            
-            BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
-            
-            [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
-            [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
-            tempindex1 = reshape(tempindex1,length(tempindex1),1);
-            tempindex2 = reshape(tempindex2,length(tempindex2),1);
-            tempindex3 = reshape(tempindex3,length(tempindex3),1);
-            tempindex4 = reshape(tempindex4,length(tempindex4),1);
-            tempindex5 = reshape(tempindex5,length(tempindex5),1);
-            tempindex6 = reshape(tempindex6,length(tempindex6),1);
-            tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
-                intersect(tempindex3,intersect(tempindex1,tempindex2))))));
-            
-            BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
-            
-            row = BadptRow; col = BadptCol; zrow = BadptZ;
-            for tempi = 1:length(row)
-                u(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                v(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                w(row(tempi),col(tempi),zrow(tempi)) = NaN;
-            end
-            
-            % u = inpaint_nans3(u,1);
-            % v = inpaint_nans3(v,1);
-            % w = inpaint_nans3(w,1);
-            
-            close all; figure, surf(v(:,:,tempkk)); colorbar; axis tight; 
-            title(['Displacement v at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            
-            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more y-disp bad points? (0-No; 1-Yes). Input here: ';
-            ClearBadInitialPointsOrNoty = input(prompt);
-            
-        end
-    end
-end
 
-u = inpaint_nans3(u,0);
-v = inpaint_nans3(v,0);
-w = inpaint_nans3(w,0);
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Remove z-disp bad points
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-while ClearBadInitialPointsOrNotz==1
-    for tempkk = 1:L %For each frame
-        ClearBadInitialPointsOrNotz = 1;
-        
-        while ClearBadInitialPointsOrNotz==1
-            
-            % Have a look at surf plot
-            close all; figure, surf(w(:,:,tempkk)); colorbar; view(2); axis tight; 
-            title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            [row1,col1] = ginput; row = floor(col1); col = floor(row1);
-            % row13 = row; col13 = col+2;   row22 = row-1; col22 = col+1;
-            % row23 = row; col23 = col+1;   row24 = row+1; col24 = col+1;
-            % row31 = row-2; col31 = col;   row32 = row-1; col32 = col;
-            % row34 = row+1; col34 = col;   row35 = row+2; col35 = col;
-            % row42 = row-1; col42 = col-1; row43 = row; col43 = col-1;
-            % row44 = row+1; col44 = col-1; row53 = row; col53 = col-2;
-            % row = [row;row13;row22;row23;row24;row31;row32;row34;row35;row42;row43;row44;row53];
-            % col = [col;col13;col22;col23;col24;col31;col32;col34;col35;col42;col43;col44;col53];
-            
-            row23 = row; col23 = col+1;  row32 = row-1; col32 = col;
-            row34 = row+1; col34 = col;  row43 = row; col43 = col-1;
-            row331 = row; col331 = col; zrow331 = tempkk-1;
-            row332 = row; col332 = col; zrow332 = tempkk+1;
-            
-            zrow = [tempkk*ones(length(row)+4,1);zrow331;zrow332];
-            row = [row;col23;row32;row34;row43;row331;row332];
-            col = [col;col23;col32;col34;col43;col331;col332];
-            
-            BadptRow = [BadptRow;row]; BadptCol = [BadptCol;col]; BadptZ = [BadptZ;zrow];
-            
-            [tempindex1] = find(BadptRow<1+size(u,1)); [tempindex2] = find(BadptCol<1+size(u,2)); [tempindex5] = find(BadptZ<1+size(u,3));
-            [tempindex3] = find(BadptRow>0); [tempindex4] = find(BadptCol>0); [tempindex6] = find(BadptZ>0);
-            tempindex1 = reshape(tempindex1,length(tempindex1),1);
-            tempindex2 = reshape(tempindex2,length(tempindex2),1);
-            tempindex3 = reshape(tempindex3,length(tempindex3),1);
-            tempindex4 = reshape(tempindex4,length(tempindex4),1);
-            tempindex5 = reshape(tempindex5,length(tempindex5),1);
-            tempindex6 = reshape(tempindex6,length(tempindex6),1);
-            tempindex = unique(intersect(tempindex6,intersect(tempindex5,intersect(tempindex4,...
-                intersect(tempindex3,intersect(tempindex1,tempindex2))))));
-            
-            BadptRow = BadptRow(tempindex); BadptCol = BadptCol(tempindex); BadptZ = BadptZ(tempindex);
-            
-            row = BadptRow; col = BadptCol; zrow = BadptZ;
-            for tempi = 1:length(row)
-                u(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                v(row(tempi),col(tempi),zrow(tempi)) = NaN;
-                w(row(tempi),col(tempi),zrow(tempi)) = NaN;
-            end
-            
-            %u = inpaint_nans3(u,1);
-            %v = inpaint_nans3(v,1);
-            %w = inpaint_nans3(w,1);
-            
-            close all; figure, surf(w(:,:,tempkk)); colorbar; axis tight; 
-            title(['Displacement w at #',num2str(tempkk),'/',num2str(L)],'fontweight','normal');
-            
-            %close all; figure, imagesc3(u ); colorbar; title('Displacement u','fontweight','normal');
-            prompt = 'Do you point out more z-disp bad points? (0-No; 1-Yes). Input here: ';
-            ClearBadInitialPointsOrNotz = input(prompt);
-            
-        end
-        
-    end
-end
-
-u = inpaint_nans3(u,0);
-v = inpaint_nans3(v,0);
-w = inpaint_nans3(w,0);
-            
 uvw.u = u; uvw.v = v; uvw.w = w;
- 
-
 disp('****** Finish removing outliers! ******');
 
 end
 
 
+
+
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+function [qDICOrNot,medianFilterThreshold,uvwUpperAndLowerBounds] = parseargs(vargin)
+
+    qDICOrNot = 0; medianFilterThreshold = 0; uvwUpperAndLowerBounds = [];
+
+    try
+        qDICOrNot = vargin{1};
+    catch
+    end
+    
+    try
+        medianFilterThreshold = vargin{2};
+    catch
+    end
+    
+    try
+        uvwUpperAndLowerBounds = vargin{3};
+    catch
+    end
+
+end
 
 
 %% ========================================================================
@@ -497,8 +556,7 @@ end
 end 
 
 %% ========================================================================
-function [cc, ccMask] = ...
-    removeBadCorrelations(cc,ccThreshold,sizeChange,mSize)
+function [cc, ccMask] = removeBadCorrelations(cc,ccThreshold,sizeChange,mSize)
 
 if sizeChange == 1
     %recompute threshold, only use pce & ppe since these give the best

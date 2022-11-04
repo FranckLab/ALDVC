@@ -140,11 +140,7 @@ if numImages > 2 %More than two frames
     % ==============================================
     % Decide DVC as accumulative or incremental mode?
     trackingMode = funParaInput('trackingMode');
-
-    % ==============================================
-    % DVC initial guess 
-    initFFTMethod = funParaInput('initFFTMethod');
-
+ 
     % ==============================================
     if strcmp(trackingMode,'cumulative')
         newFFTSearch = funParaInput('newFFTSearch'); %0-Use previous frame's results; 1-Calculate a new initial guess

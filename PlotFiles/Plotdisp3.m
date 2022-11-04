@@ -33,6 +33,9 @@ function Plotdisp3(U,coordinatesXYZ,varargin)
 
 
 %%
+
+U(isnan(U)) = 0;
+
 % Generate model
 dvcVOI = createpde(1);
 
@@ -165,9 +168,9 @@ else %%%%%% Plot all figures on the same page
     
     %% %%%% Plot z-disp %%%%%%%
     hold on, subplot(2,3,3),
-    pdeplot3D(dvcVOI,'ColorMapData',U(2:3:end),'FaceAlpha',1.0);
+    pdeplot3D(dvcVOI,'ColorMapData',U(3:3:end),'FaceAlpha',1.0);
     hold on, pdegplot(dvcVOI,'FaceLabel','off','FaceAlpha',0.3);
-    title('$y-$displacement $v$','FontWeight','Normal','Interpreter','latex');
+    title('$z-$displacement $v$','FontWeight','Normal','Interpreter','latex');
     set(gca,'fontsize',18); axis on; axis equal; set(gcf,'color','w'); 
 
     try colormap(colorMap); catch; end

@@ -15,6 +15,8 @@ if strcmp(fftMethod,'bigxcorrUni') == 1
     disp('--- What is your initial guess search zone size? ---')
     prompt = 'Input here: ';
     tempSizeOfSearchRegion = input(prompt);
+    % tempSizeOfSearchRegion = [20,20,3];
+    
     if length(tempSizeOfSearchRegion) == 1
         tempSizeOfSearchRegion = tempSizeOfSearchRegion*ones(1,3);
     end

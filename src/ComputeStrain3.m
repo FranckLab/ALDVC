@@ -17,19 +17,21 @@
 % Date: 2017-2018.02, 2020.06, 2022.09
 % =========================================================
 
+if ImgSeqNum==2, strainPlaneFittingWidth = []; end
+
 switch DVCpara.strainCalculationMethod
 
     % ======================================
     case 0 % Direct output
-        Rad = [0,0,0];
+        strainPlaneFittingHalfWidth = [0,0,0];
         FStrain = F_accum;   
         FStrain_crop_no_edges = FStrain;
         
     % ======================================
     case 1 % Finite difference method
-        Rad = [1,1,1];
+        strainPlaneFittingHalfWidth = [1,1,1];
         FDOperator3 = funDerivativeOp3(MNL(1),MNL(2),MNL(3),DVCpara.winstepsize); 
-        [notNeumannBCInd_F,notNeumannBCInd_U] = funFDNeumannBCInd3(size(DVCmesh.coordinatesFEM,1),[M,N,L],Rad); % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
+        [notNeumannBCInd_F,notNeumannBCInd_U] = funFDNeumannBCInd3(size(DVCmesh.coordinatesFEM,1),[M,N,L],strainPlaneFittingHalfWidth); % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
         F_accum = FDOperator3*U_accum; FStrain_crop_no_edges = F_accum(notNeumannBCInd_F);
         FStrain = F_accum; FStrain(notNeumannBCInd_F) = FStrain_crop_no_edges;
  
@@ -39,53 +41,60 @@ switch DVCpara.strainCalculationMethod
         FStrain = FDOperator3 * reshape(U_accum,length(U_accum),1); % JY!!! change intrisic coords to world coords
         
         % Compute strain method II: Plane Fitting method
-        disp('What is the half length of the edge of the used square fitting plane? ')
-        prompt = 'Input here (unit: voxel): ';
-        Rad = input(prompt); if length(Rad)==1, Rad=ones(1,3)*Rad; end
-        
-        [UNew,DUDX,DUDY,DUDZ] = funPlaneFit3(reshape(U_accum(1:3:end),M,N,L),DVCpara.winstepsize,Rad,1);
-        [VNew,DVDX,DVDY,DVDZ] = funPlaneFit3(reshape(U_accum(2:3:end),M,N,L),DVCpara.winstepsize,Rad,2);
-        [WNew,DWDX,DWDY,DWDZ] = funPlaneFit3(reshape(U_accum(3:3:end),M,N,L),DVCpara.winstepsize,Rad,3);
-         
-        FStrain_crop_no_edges = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        xyz_ind_crop = [(Rad(1)+1):M-Rad(1), (Rad(2)+1):N-Rad(2), (Rad(3)+1):L-Rad(3)];
-        xyz_pixels_crop = (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3));
+        if isempty(strainPlaneFittingWidth)
+            fprintf('How many data points to use in the plane fitting method? \n');
+            fprintf('Input an odd number for the # of data points in each dimension (e.g. [Nx,Ny,Nz]). \n');
+            prompt = 'Input here: ';
+            strainPlaneFittingWidth = input(prompt); 
+            strainPlaneFittingHalfWidth = (strainPlaneFittingWidth-1)/2;
+            if length(strainPlaneFittingHalfWidth)==1, strainPlaneFittingHalfWidth=ones(1,3)*strainPlaneFittingHalfWidth; end
+        end
 
-        FStrain_crop_no_edges(1:9:end) = reshape(DUDX(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(2:9:end) = reshape(DVDX(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(3:9:end) = reshape(DWDX(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(4:9:end) = reshape(DUDY(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(5:9:end) = reshape(DVDY(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(6:9:end) = reshape(DWDY(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(7:9:end) = reshape(DUDZ(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(8:9:end) = reshape(DVDZ(xyz_ind_crop), xyz_pixels_crop, 1);
-        FStrain_crop_no_edges(9:9:end) = reshape(DWDZ(xyz_ind_crop), xyz_pixels_crop, 1);
+        [UNew,DUDX,DUDY,DUDZ] = funPlaneFit3(reshape(U_accum(1:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,1);
+        [VNew,DVDX,DVDY,DVDZ] = funPlaneFit3(reshape(U_accum(2:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,2);
+        [WNew,DWDX,DWDY,DWDZ] = funPlaneFit3(reshape(U_accum(3:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,3);
+         
+        FStrain_crop_no_edges = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        x_ind_crop = (strainPlaneFittingHalfWidth(1)+1):M-strainPlaneFittingHalfWidth(1);  
+        y_ind_crop = (strainPlaneFittingHalfWidth(2)+1):N-strainPlaneFittingHalfWidth(2);  
+        z_ind_crop = (strainPlaneFittingHalfWidth(3)+1):L-strainPlaneFittingHalfWidth(3);
+        xyz_pixels_crop = (M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3));
+
+        FStrain_crop_no_edges(1:9:end) = reshape(DUDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(2:9:end) = reshape(DVDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(3:9:end) = reshape(DWDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(4:9:end) = reshape(DUDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(5:9:end) = reshape(DVDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(6:9:end) = reshape(DWDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(7:9:end) = reshape(DUDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(8:9:end) = reshape(DVDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(9:9:end) = reshape(DWDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
           
-        % Find coordinatesFEM that belong to "xyz_ind_crop"
+        % Find coordinatesFEM that belong to "(x_ind_crop,y_ind_crop,z_ind_crop)"
         nodeInd = 1:1:size(coordinatesFEM,1); nodeInd = nodeInd';
-        nodeInd = reshape(nodeInd,M,N,L); nodeInd_crop_no_edges = nodeInd(xyz_ind_crop);
+        nodeInd = reshape(nodeInd,M,N,L); nodeInd_crop_no_edges = nodeInd(x_ind_crop,y_ind_crop,z_ind_crop);
         nodeInd_crop_no_edges = reshape(nodeInd_crop_no_edges, xyz_pixels_crop, 1);
         
         % Plotstrain0(FStraintemp,x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad),f,g);
-        notNeumannBCInd_F = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        for i = 1:(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3))
+        notNeumannBCInd_F = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        for i = 1:(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3))
             notNeumannBCInd_F(9*i-8:9*i) = 9*nodeInd_crop_no_edges(i)*ones(9,1)+[-8:1:0]';
         end
         FStrain(notNeumannBCInd_F) = FStrain_crop_no_edges;
        
     % ======================================
     case 3 % Finite element method
-        
+        strainPlaneFittingHalfWidth = [1,1,1];
         GaussPtOrder=2; [FStrain,~,~] = funGlobal_NodalStrainAvg3(coordinatesFEM,elementsFEM,U_accum,GaussPtOrder);
      
-        Rad = [1,1,1]; %Try to remove results near FE-mesh edges 
-        nodeInd = 1:1:size(coordinatesFEM,1); nodeInd = nodeInd';
+        strainPlaneFittingHalfWidth = [1,1,1]; %Try to remove results near FE-mesh edges 
+        nodeInd = 1:1:size(coordinatesFEM,1); nodeInd = nodeIRemoveOutliersListnd';
         nodeInd = reshape(nodeInd,M,N,L); 
-        nodeInd_crop_no_edges = nodeInd(Rad(1)+1:M-Rad(1), Rad(2)+1:N-Rad(2), Rad(3)+1:L-Rad(3));
-        nodeInd_crop_no_edges = reshape(nodeInd_crop_no_edges, (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
+        nodeInd_crop_no_edges = nodeInd(strainPlaneFittingHalfWidth(1)+1:M-strainPlaneFittingHalfWidth(1), strainPlaneFittingHalfWidth(2)+1:N-strainPlaneFittingHalfWidth(2), strainPlaneFittingHalfWidth(3)+1:L-strainPlaneFittingHalfWidth(3));
+        nodeInd_crop_no_edges = reshape(nodeInd_crop_no_edges, (M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
         
-        notNeumannBCInd_F = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        for i = 1:(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3))
+        notNeumannBCInd_F = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        for i = 1:(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3))
             notNeumannBCInd_F(9*i-8:9*i) = 9*nodeInd_crop_no_edges(i)*ones(9,1)+[-8:1:0]';
         end
         FStrain_crop_no_edges = FStrain(notNeumannBCInd_F);
@@ -96,16 +105,20 @@ switch DVCpara.strainCalculationMethod
         disp('Wrong Input to compute strain field!')
         
 end
- 
+
+DVCpara.strainPlaneFittingHalfWidth = strainPlaneFittingHalfWidth;
 
 %% Update infinitesimal strain to large deformation gradient tensor
-FStrainFinite = FStrain;
-for tempi = 1:9:length(FStrain)
+for tempi = 1:9:length(FStrain)-8
     
-    % Obtain each component of def grad tensor
-    dudx = FStrain(tempi);   dvdx = FStrain(tempi+1); dwdx = FStrain(tempi+2);
-    dudy = FStrain(tempi+3); dvdy = FStrain(tempi+4); dwdy = FStrain(tempi+5);
-    dudz = FStrain(tempi+6); dvdz = FStrain(tempi+7); dwdz = FStrain(tempi+8); 
+    if DVCpara.strainType~=0
+        % Obtain each component of def grad tensor
+        dudx = FStrain(tempi);   dvdx = FStrain(tempi+1); dwdx = FStrain(tempi+2);
+        dudy = FStrain(tempi+3); dvdy = FStrain(tempi+4); dwdy = FStrain(tempi+5);
+        dudz = FStrain(tempi+6); dvdz = FStrain(tempi+7); dwdz = FStrain(tempi+8); 
+
+        FStrainFinite = FStrain; %Initialize variable "FStrainFinite"
+    end
     
     switch DVCpara.strainType
         % ======================================

@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Slice plot 3D displacement using grid data
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function Plotstrain3(FStrainTensor,x,y,z,varargin)
+function Plotstrain3(FStrainTensor,coordinatesXYZ,varargin)
 %FUNCTION Plotstrain3(F,x,y,z,varargin)
 % To plot DVC 3D volumetric strain fields
 % -------------------------------------------------
@@ -10,7 +10,11 @@ function Plotstrain3(FStrainTensor,x,y,z,varargin)
 %                           FStrainTensor = [..., F11_nodei, F21_nodei, F31_nodei, ...
 %                                                 F12_nodei, F22_nodei, F32_nodei, ...
 %                                                 F13_nodei, F23_nodei, F33_nodei, ...]';
-%          x,y,z            x-, y-, & z-coordinates of nodal points 
+%          coordinatesXYZ   Coordinates of nodal points: 
+%                           [x-coord_node1, y-coord_node1, z-coord_node1;  
+%                            x-coord_node2, y-coord_node2, z-coord_node2;  
+%                            ...;
+%                            x-coord_nodeN, y-coord_nodeN, z-coord_nodeN];
 %          individualOrAll  Parameter to plot each individual displacement
 %                           component or plot all components in the same figure
 %          colorMap         User selected colormap matrix (i.e., a [Nx3] matrix) or
@@ -31,15 +35,11 @@ function Plotstrain3(FStrainTensor,x,y,z,varargin)
 [individualOrAll,colorMap,caxisLimit] = parseargs(varargin);
 
 %%
-% ------ Load coordinates ------
-M = size(x,1); N = size(y,2); L = size(z,3);
- 
- 
 % Generate model
 dvcVOI = createpde(1);
 
 % Apply mesh
-DT = delaunayTriangulation(x(:), y(:), z(:));
+DT = delaunayTriangulation(coordinatesXYZ(:,1), coordinatesXYZ(:,2), coordinatesXYZ(:,3));
 geometryFromMesh(dvcVOI,DT.Points',DT.ConnectivityList');
 % ------ FEMesh has structure ------
 % FEMesh with properties:
@@ -50,7 +50,7 @@ geometryFromMesh(dvcVOI,DT.Points',DT.ConnectivityList');
 % ----------------------------------
 
 %%
-if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
+if (strcmp(individualOrAll,'Individual')==1) || (strcmp(individualOrAll,'individual')==1)
     
     %% %%%%% Plot e11 %%%%%%%
     figure,  
@@ -73,9 +73,10 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
+
      
     %% %%%%% Plot e22 %%%%%%%
     figure,  
@@ -95,9 +96,9 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
     
     %% %%%%% Plot e33 %%%%%%%
@@ -118,9 +119,9 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
     
     %% %%%%% Plot e12 %%%%%%%
@@ -141,9 +142,9 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
     
     %% %%%%% Plot e13 %%%%%%%
@@ -164,9 +165,9 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
     
     %% %%%%% Plot e23 %%%%%%%
@@ -187,9 +188,9 @@ if (strcmp(IndiOrAll,'Individual')==1) || (strcmp(IndiOrAll,'individual')==1)
     b.Position = b.Position + [.05 0 0 0];
      
     %%%%%% Make the view look tight %%%%%%%
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
     
 else %%%%%% Plot all figures on the same page
@@ -207,9 +208,9 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
 
 
     %% %%%%% Plot e22 %%%%%%%%
@@ -225,9 +226,10 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
+
     
     %% %%%%% Plot e33 %%%%%%%
     hold on; subplot(2,3,3),
@@ -242,9 +244,10 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
+
  
     %% %%%%% Plot e12 %%%%%%%
     hold on; subplot(2,3,4),
@@ -259,9 +262,10 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
+
     
     %% %%%%% Plot e13 %%%%%%%
     hold on; subplot(2,3,5),
@@ -276,9 +280,10 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
+
     
     %% %%%%% Plot e23 %%%%%%%
     hold on; subplot(2,3,6),
@@ -293,10 +298,42 @@ else %%%%%% Plot all figures on the same page
     a = gca; a.TickLabelInterpreter = 'latex';
     b = colorbar; b.TickLabelInterpreter = 'latex';
 
-    xlim([x(1,1,1),x(M,N,L)]); 
-    ylim([y(1,1,1),y(M,N,L)]); 
-    zlim([z(1,1,1),z(M,N,L)]);
+    xlim([min(coordinatesXYZ(:,1)),max(coordinatesXYZ(:,1))]);
+    ylim([min(coordinatesXYZ(:,2)),max(coordinatesXYZ(:,2))]);
+    zlim([min(coordinatesXYZ(:,3)),max(coordinatesXYZ(:,3))]);
     
+    
+end
+
+end
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+function [individualOrAll,colorMap,caxisLimit] = parseargs(vargin)
+
+individualOrAll = []; colorMap = []; caxisLimit = [];
+ 
+try 
+    individualOrAll = vargin{1};     
+catch
+    individualOrAll = 'all';
+end
+
+try 
+    colorMap = vargin{2};
+    if isempty(colorMap), colorMap = 'turbo'; end
+catch
+    colorMap = 'turbo';
+end
+
+try 
+    caxisLimit = vargin{3};
+    if size(caxisLimit,1)==1
+        caxisLimit = repmat(caxisLimit,3,1);
+    end
+catch     
+end
+
 end
 
 
