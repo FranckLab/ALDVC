@@ -872,7 +872,7 @@ for ImgSeqNum = 2 : length(fileNameAll)-1
 
     coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
     strainPlaneFittingHalfWidth = DVCpara.strainPlaneFittingHalfWidth;
-	
+
     xList = min(coordinatesFEM(:,1)):DVCpara.winstepsize(1):max(coordinatesFEM(:,1)); M = length(xList);
     yList = min(coordinatesFEM(:,2)):DVCpara.winstepsize(2):max(coordinatesFEM(:,2)); N = length(yList);
     zList = min(coordinatesFEM(:,3)):DVCpara.winstepsize(3):max(coordinatesFEM(:,3)); L = length(zList);
@@ -881,7 +881,7 @@ for ImgSeqNum = 2 : length(fileNameAll)-1
 
     %%%%%% Uncomment these lines if you want to compuate Lagrangian strains %%%%%% 
     % for tempi = 1:length(Strain_World_temp)/9
-    %
+    % 
     %     tempFMatrix = [1+Strain_World_temp(9*tempi-9+1), Strain_World_temp(9*tempi-9+4), Strain_World_temp(9*tempi-9+7);
     %                     Strain_World_temp(9*tempi-9+2), 1+Strain_World_temp(9*tempi-9+5), Strain_World_temp(9*tempi-9+8);
     %                     Strain_World_temp(9*tempi-9+3), Strain_World_temp(9*tempi-9+6), 1+Strain_World_temp(9*tempi-9+9)];
@@ -902,7 +902,7 @@ for ImgSeqNum = 2 : length(fileNameAll)-1
     % end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    M1=3; N1=5; L1=3;
+    M1=5; N1=5; L1=3;
 
     Strain_11 = reshape(Strain_World_temp(1:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
     Strain_11_crop = Strain_11(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
@@ -990,6 +990,12 @@ axis([ImgNum1,ImgNum2,-0.2,0.35]); %TODO: change axis range
 
 lgd = legend('$e_{11}$','$e_{22}$','$e_{33}$','$e_{12}$','$e_{13}$','$e_{23}$','interpreter','latex');
 set(lgd,'location','northeastoutside'); set(lgd,'fontsize',16);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp("Reminder: Only calculate det(F) and Poisson's ratio if you are using infinitesimal strains.")
+disp('If you are using Lagrangian strains, following codes are not accurate!')
+pause;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
