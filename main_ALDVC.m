@@ -871,7 +871,8 @@ plotExt_bodyslice; % Feel free to modify this file (./PlotFiles/plotExt_bodyslic
 for ImgSeqNum = 2 : length(fileNameAll)-1
 
     coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
-
+    strainPlaneFittingHalfWidth = DVCpara.strainPlaneFittingHalfWidth;
+	
     xList = min(coordinatesFEM(:,1)):DVCpara.winstepsize(1):max(coordinatesFEM(:,1)); M = length(xList);
     yList = min(coordinatesFEM(:,2)):DVCpara.winstepsize(2):max(coordinatesFEM(:,2)); N = length(yList);
     zList = min(coordinatesFEM(:,3)):DVCpara.winstepsize(3):max(coordinatesFEM(:,3)); L = length(zList);
