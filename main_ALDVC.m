@@ -26,7 +26,7 @@ fprintf('------------ Section 1 Done ------------ \n \n')
 fprintf('------------ Section 2 Start ------------ \n')
 
 % ====== Pre-load images ======
-fileName = 'Time*.mat';  fileFolder = './DVC_images/vol_Quasistatic_PAinMineralOil/'; %Change "filename" and "fileFolder" by yourself
+fileName = 'TensionTime*.mat';  fileFolder = './DVC_images/vol_tension_device/'; %Change "filename" and "fileFolder" by yourself
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
         cd(fileFolder); %Open "fileFolder" if it is a valid path
@@ -534,9 +534,16 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
 end
 
 
+%% Save data before you calculate strains
+results_name = ['results_ws',num2str(DVCpara.winsize(1)),'_st',num2str(DVCpara.winstepsize(1)),'.mat'];
+save(results_name, 'fileNameAll','DVCpara','DVCmesh','ResultDisp','ResultDefGrad','ResultFEMeshEachFrame',...
+    'ResultConvItPerEle','ResultMuBeta' );
+
+
+
 %% Check ICGN convergence in ADMM iterations
 figure,
-for ImgSeqNum = 2 : length(fileNameAll)
+for ImgSeqNum = 2 : length(fileNameAll)-1
     convIterPerEle = ResultConvItPerEle{ImgSeqNum-1}.ConvItPerEle;
     hold on; plot(ImgSeqNum,mean(convIterPerEle(:,1)),'ro','linewidth',1);
     hold on; plot(ImgSeqNum,mean(convIterPerEle(:,2)),'b+','linewidth',1);
@@ -548,9 +555,8 @@ lgd = legend('ADMM Iter #1','ADMM Iter #2','ADMM Iter #3','ADMM Iter #4');
 set(gca,'fontsize',20); set(lgd,'fontsize',14); 
 xlabel('Frame #'); ylabel('ICGN iteration steps');
 
-
-
-for ImgSeqNum = 9
+ 
+for ImgSeqNum = 9 %TODO: plot one frame's incremental displacements
     Plotdisp3(ResultDisp{ImgSeqNum-1}.U, ...
         ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM,'all' );
 end
@@ -610,6 +616,11 @@ end
 % 
 % % ------ clear temp variables ------
 % clear a ALSub1BadPtNum ALSub1Timetemp atemp b btemp cc ConvItPerEletemp hbar Hbar
+
+%%%%% Save data before you calculate strains %%%%%%
+results_name = ['results_ws',num2str(DVCpara.winsize(1)),'_st',num2str(DVCpara.winstepsize(1)),'.mat'];
+save(results_name, 'fileNameAll','DVCpara','DVCmesh','ResultDisp','ResultDefGrad','ResultFEMeshEachFrame',...
+    'ResultConvItPerEle','ResultMuBeta' );
 
 
 %% Section 7
@@ -857,7 +868,7 @@ plotExt_bodyslice; % Feel free to modify this file (./PlotFiles/plotExt_bodyslic
 
 
 %% If you want to calculate strain statistics for uniform deformations:
-for ImgSeqNum = 2 : length(fileNameAll)
+for ImgSeqNum = 2 : length(fileNameAll)-1
 
     coordinatesFEM = ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM;
 
@@ -867,7 +878,30 @@ for ImgSeqNum = 2 : length(fileNameAll)
 
     Strain_World_temp = ResultStrain{ImgSeqNum-1}.strain_World;
 
-    M1=5; N1=5; L1=3;
+    %%%%%% Uncomment these lines if you want to compuate Lagrangian strains %%%%%% 
+    % for tempi = 1:length(Strain_World_temp)/9
+    %
+    %     tempFMatrix = [1+Strain_World_temp(9*tempi-9+1), Strain_World_temp(9*tempi-9+4), Strain_World_temp(9*tempi-9+7);
+    %                     Strain_World_temp(9*tempi-9+2), 1+Strain_World_temp(9*tempi-9+5), Strain_World_temp(9*tempi-9+8);
+    %                     Strain_World_temp(9*tempi-9+3), Strain_World_temp(9*tempi-9+6), 1+Strain_World_temp(9*tempi-9+9)];
+    % 
+    %     tempCMatrix = tempFMatrix' * tempFMatrix;
+    %     tempEMatrix = 0.5*(tempCMatrix-eye(3));
+    % 
+    %     Strain_World_temp(9*tempi-8) = tempEMatrix(1,1);
+    %     Strain_World_temp(9*tempi-7) = tempEMatrix(2,1);
+    %     Strain_World_temp(9*tempi-6) = tempEMatrix(3,1);
+    %     Strain_World_temp(9*tempi-5) = tempEMatrix(1,2);
+    %     Strain_World_temp(9*tempi-4) = tempEMatrix(2,2);
+    %     Strain_World_temp(9*tempi-3) = tempEMatrix(3,2);
+    %     Strain_World_temp(9*tempi-2) = tempEMatrix(1,3);
+    %     Strain_World_temp(9*tempi-1) = tempEMatrix(2,3);
+    %     Strain_World_temp(9*tempi-0) = tempEMatrix(3,3);
+    % 
+    % end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    M1=3; N1=5; L1=3;
 
     Strain_11 = reshape(Strain_World_temp(1:9:end), M-2*strainPlaneFittingHalfWidth(1), N-2*strainPlaneFittingHalfWidth(2), L-2*strainPlaneFittingHalfWidth(3));
     Strain_11_crop = Strain_11(M1+1:end-M1, N1+1:end-N1, L1+1:end-L1);
@@ -932,39 +966,58 @@ for ImgSeqNum = 2 : length(fileNameAll)
 end
 
 %%%%%%%%% %TODO: modify these codes ...
+ImgNum1=2; ImgNum2=34; 
 
-ImgNum1=2; ImgNum2=44; 
-figure,   errorbar( [ImgNum1:ImgNum2], Strain_11_mean(ImgNum1:ImgNum2), Strain_11_std(ImgNum1:ImgNum2),'linewidth',1 );
+figure, %Plot strain components
+errorbar( [ImgNum1:ImgNum2], Strain_11_mean(ImgNum1:ImgNum2), Strain_11_std(ImgNum1:ImgNum2),'linewidth',1 );
 hold on;  errorbar( [ImgNum1:ImgNum2], Strain_22_mean(ImgNum1:ImgNum2), Strain_22_std(ImgNum1:ImgNum2),'linewidth',1 );
 hold on;  errorbar( [ImgNum1:ImgNum2], Strain_33_mean(ImgNum1:ImgNum2), Strain_33_std(ImgNum1:ImgNum2),'linewidth',1 );
 hold on;  errorbar( [ImgNum1:ImgNum2], Strain_12_mean(ImgNum1:ImgNum2), Strain_12_std(ImgNum1:ImgNum2),'linewidth',1 );
 hold on;  errorbar( [ImgNum1:ImgNum2], Strain_13_mean(ImgNum1:ImgNum2), Strain_13_std(ImgNum1:ImgNum2),'linewidth',1 );
-hold on;  errorbar( [ImgNum1:ImgNum2], Strain_23_mean(ImgNum1:ImgNum2), Strain_23_std(ImgNum1:ImgNum2),'linewidth',1 );
+hold on;  errorbar( [ImgNum1:ImgNum2], Strain_23_mean(ImgNum1:ImgNum2), Strain_23_std(ImgNum1:ImgNum2),'linewidth',1,'color',[0.6350 0.0780 0.1840] );
 
-axis([2,44,-0.3,0.95])
-set(gca,'fontsize',20);
-xlabel('Frame #'); ylabel('Strain');
+hold on; plot([ImgNum1:ImgNum2], Strain_11_mean(ImgNum1:ImgNum2),'o','linewidth',1,'color',[0 0.4470 0.7410]);
+hold on; plot([ImgNum1:ImgNum2], Strain_22_mean(ImgNum1:ImgNum2),'s','linewidth',1,'color',[0.8500 0.3250 0.0980]);
+hold on; plot([ImgNum1:ImgNum2], Strain_33_mean(ImgNum1:ImgNum2),'x','linewidth',1,'color',[0.9290 0.6940 0.1250]);
+hold on; plot([ImgNum1:ImgNum2], Strain_12_mean(ImgNum1:ImgNum2),'^','linewidth',1,'color',[0.4940 0.1840 0.5560]);
+hold on; plot([ImgNum1:ImgNum2], Strain_13_mean(ImgNum1:ImgNum2),'<','linewidth',1,'color',[0.4660 0.6740 0.1880]);
+hold on; plot([ImgNum1:ImgNum2], Strain_23_mean(ImgNum1:ImgNum2),'d','linewidth',1,'color',[0.6350 0.0780 0.1840]);
+ 
+
+set(gca,'fontsize',20); xlabel('Frame #'); ylabel('Strain'); 
+axis([ImgNum1,ImgNum2,-0.2,0.35]); %TODO: change axis range
 
 lgd = legend('$e_{11}$','$e_{22}$','$e_{33}$','$e_{12}$','$e_{13}$','$e_{23}$','interpreter','latex');
 set(lgd,'location','northeastoutside'); set(lgd,'fontsize',16);
 
-figure, errorbar(Strain_22_mean(ImgNum1:ImgNum2), detF_mean(ImgNum1:ImgNum2), detF_std(ImgNum1:ImgNum2), 'k', 'linewidth',1  );
-set(gca,'fontsize',20);
-xlabel('$e_{22}$','interpreter','latex'); ylabel('det($\mathbf{F}$)','interpreter','latex');
-axis([0,0.9,1,1.45]);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure, %Plot det(F) %%% Only use small strain option to plot det(F)
+errorbar(Strain_22_mean(ImgNum1:ImgNum2), detF_mean(ImgNum1:ImgNum2), detF_std(ImgNum1:ImgNum2), 'k', 'linewidth',1  );
+set(gca,'fontsize',20); xlabel('$e_{22}$','interpreter','latex'); ylabel('det($\mathbf{F}$)','interpreter','latex');
+axis([0,0.25,0.93,1.07]); xticks([0.05,0.1,0.15,0.2,0.25]); %TODO: change axis range
 
 hold on; errorbar(Strain_22_mean(ImgNum1:ImgNum2), detF_approx_mean(ImgNum1:ImgNum2), detF_approx_std(ImgNum1:ImgNum2), 'b--', 'linewidth',1  );
-lgd = legend('exp','adjusted');
-set(lgd,'location','northwest'); set(lgd,'fontsize',16);
+
+hold on, plot(Strain_22_mean(ImgNum1:ImgNum2), detF_mean(ImgNum1:ImgNum2),'ko','linewidth',1 );
+hold on, plot(Strain_22_mean(ImgNum1:ImgNum2), detF_approx_mean(ImgNum1:ImgNum2),'bs','linewidth',1 );
+
+lgd = legend('exp','adjusted'); set(lgd,'location','northwest'); set(lgd,'fontsize',16);
 
 
-figure, errorbar(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_21_mean(ImgNum1:ImgNum2), Poisson_ratio_21_std(ImgNum1:ImgNum2),'linewidth',1  );
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure, %Plot Poisson's ratios
+errorbar(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_21_mean(ImgNum1:ImgNum2), Poisson_ratio_21_std(ImgNum1:ImgNum2),'linewidth',1  );
 hold on, errorbar(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_23_mean(ImgNum1:ImgNum2), Poisson_ratio_23_std(ImgNum1:ImgNum2),'linewidth',1  );
-set(gca,'fontsize',20);
-xlabel('$e_{22}$','interpreter','latex'); ylabel("Poisson's ratio");
-axis([0,0.9,0,0.3]);
 
-lgd = legend('$-e_{11}/e_{22}$','$-e_{11}/e_{33}$','interpreter','latex');
+hold on, plot(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_21_mean(ImgNum1:ImgNum2),'o','linewidth',1,'color',[0 0.4470 0.7410]);
+hold on, plot(Strain_22_mean(ImgNum1:ImgNum2), Poisson_ratio_23_mean(ImgNum1:ImgNum2),'s','linewidth',1,'color',[0.8500 0.3250 0.0980]);
+
+set(gca,'fontsize',20); xlabel('$e_{22}$','interpreter','latex'); ylabel("Poisson's ratio");
+
+axis([0,0.25,0,1]); xticks([0.05,0.1,0.15,0.2,0.25]); %TODO: change axis range
+
+lgd = legend('$-e_{11}/e_{22}$','$-e_{33}/e_{22}$','interpreter','latex');
 set(lgd,'location','northwest'); set(lgd,'fontsize',16);
 
 
