@@ -24,7 +24,7 @@ https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
 * Full text can be requested at: https://www.researchgate.net/publication/342182706_Augmented_Lagrangian_Digital_Volume_Correlation
 
 ## Contact and support
-Email: aldicdvc@gmail.com;  -or- Jin Yang, jyang526@wisc.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
+Email: aldicdvc@gmail.com;  -or- Prof. Jin Yang, jin.yang@austin.utexas.edu; -or- Prof. Christian Franck, cfranck@wisc.edu
 Welcome to give us ratings and make comments at: [![View Augmented Lagrangian Digital Volume Correlation (ALDVC) on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/77019-augmented-lagrangian-digital-volume-correlation-aldvc)
 
 
