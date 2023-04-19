@@ -14,9 +14,9 @@ ALDVC MATLAB code was tested on MATLAB versions later than R2018a. Both single t
 
 ## ALDVC example dataset
 Example images download link: 
-https://uwmadison.box.com/s/kr6pjje9yfi9k9va6cbk1ayvhvbs5nvq <p>
+https://utexas.box.com/s/dha6cyk6it5h7cuxxyamq5datonw2vx4 <p>
 Example results download link: 
-https://uwmadison.box.com/s/wdhmysbehidobwd6oh8tn120ufjq1iov
+https://utexas.box.com/s/nku4lkkkk95srdflhhbinurxy077jd62
 
 
 ## Citation
