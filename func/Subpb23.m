@@ -12,7 +12,7 @@ elementsFEM = DVCmesh.elementsFEM;
 dirichlet = DVCmesh.dirichlet;
 neumann = DVCmesh.neumann;
 
-DIM = 3; NodesPerEle = 8; alpha2=0; % Ignore alpha2 first for this code.
+DIM = 3; NodesPerEle = 8; alpha2 = 0; % Ignore alpha2 first for this code.
 FEMSize = size(coordinatesFEM,1);
   
 % ====== Info of CrackTip path-line ======

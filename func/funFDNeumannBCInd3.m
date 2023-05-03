@@ -1,5 +1,5 @@
 % Find indices of finite difference scheme Neumann boundary points 
-function [NeumannBCInd_F, NeumannBCInd_u]  = funFDNeumannBCInd3(size1coordinatesFEM,MNL,Rad)
+function [notNeumannBCInd_F, notNeumannBCInd_u]  = funFDNeumannBCInd3(size1coordinatesFEM,MNL,Rad)
 
 if length(Rad)==1, Rad=Rad*ones(1,3); end
 
@@ -20,5 +20,5 @@ for i = 1:(MNL(1)-2*Rad(1))*(MNL(2)-2*Rad(2))*(MNL(3)-2*Rad(3)),
 end
 % btemp = b(temp4);
 
-NeumannBCInd_F = temp3(:);
-NeumannBCInd_u = temp4(:);
+notNeumannBCInd_F = temp3(:);
+notNeumannBCInd_u = temp4(:);

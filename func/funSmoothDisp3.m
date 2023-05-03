@@ -63,12 +63,14 @@ while (DoYouWantToSmoothOnceMore==0)
     Iblur_3 = griddata(coordinatesFEM(:,1),coordinatesFEM(:,2),coordinatesFEM(:,3),U(3:3:end),Xq,Yq,Zq,'natural');
     
     % Gaussian smooth deformation gradients
-%     U1temp = imgaussfilt3(Iblur_1,FilterStd,'FilterSize',FilterSizeInput);
-%     U2temp = imgaussfilt3(Iblur_2,FilterStd,'FilterSize',FilterSizeInput);
-%     U3temp = imgaussfilt3(Iblur_3,FilterStd,'FilterSize',FilterSizeInput);
+    
     U1temp = medfilt3(Iblur_1,[FilterSizeInput,FilterSizeInput,FilterSizeInput]);
     U2temp = medfilt3(Iblur_2,[FilterSizeInput,FilterSizeInput,FilterSizeInput]);
     U3temp = medfilt3(Iblur_3,[FilterSizeInput,FilterSizeInput,FilterSizeInput]);
+
+%     U1temp = imgaussfilt3(U1temp,FilterStd,'FilterSize',FilterSizeInput);
+%     U2temp = imgaussfilt3(U2temp,FilterStd,'FilterSize',FilterSizeInput);
+%     U3temp = imgaussfilt3(U3temp,FilterStd,'FilterSize',FilterSizeInput);
     
 %     Iblur_Top11 = gridfit(coordinatesFEM(:,1), coordinatesFEM(:,2), FLocal(1:4:end),Coordxnodes,Coordynodes,'regularizer','springs'); 
 %     Iblur_Top11=Iblur_Top11';

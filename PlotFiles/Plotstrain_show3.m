@@ -11,16 +11,13 @@ DT = delaunayTriangulation(coordinatesFEM(:,1), coordinatesFEM(:,2), coordinates
 geometryFromMesh(dvcVOI,DT.Points',DT.ConnectivityList');
 % ------ FEMesh has structure ------
 % FEMesh with properties:
-% 
-%              Nodes: [3x10003 double]
-%           Elements: [10x5774 double]
-%     MaxElementSize: 9.7980
-%     MinElementSize: 4.8990
-%      MeshGradation: 1.5000
-%     GeometricOrder: 'quadratic'
+%
+%              Nodes: [3xN double]
+%           Elements: [4xM double]
+%     GeometricOrder: 'linear'
 % ----------------------------------
 
-% plot dvcZOI domain
+%% Plot dvcZOI domain
 % ---------------------------------
 figure,
 subplot(2,3,1), pdeplot3D(dvcVOI,'ColorMapData',F(1:9:end),'FaceAlpha',0.5);

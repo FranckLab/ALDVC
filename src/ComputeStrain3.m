@@ -1,160 +1,198 @@
-% ==================================
-% Compute strain
-% ----------------------------------
-% switch MethodToComputeStrain
-%   case 0: direct solved results;
-%   case 1: central finite difference;
-%   case 2: plane fitting method;
-%   case 3: finite element Gauss points;
-% ==================================
+% =========================================================
+% Compute strain using solved displacement and deformation gradient results
+% =========================================================
+% 
+% Four methods are provided to compute strain fields
+%   Method 1: direct solved results;
+%   Method 2: central finite difference;
+%   Method 3: plane fitting method;
+%   Method 4: finite element Gauss points;
+%   
+% Strain types:
+%   
+%
+% ---------------------------------------------------------
+% Author: Jin Yang, Asst.Prof. @UT-Austin; Postdoc @UW-Madison; PhD '19 @Caltech;
+% Contact: aldicdvc@gmail.com; jin.yang@austin.utexas.edu
+% Date: 2017-2018.02, 2020.06, 2022.09
+% =========================================================
 
-switch DVCpara.MethodToComputeStrain
+if ImgSeqNum==2, strainPlaneFittingWidth = []; end
+
+switch DVCpara.strainCalculationMethod
+
+    % ======================================
     case 0 % Direct output
-        Rad = [0,0,0];
-        FStrain = FLocal;  % JY!!! change intrisic coords to world coords
-        FStraintemp = FStrain;
+        strainPlaneFittingHalfWidth = [0,0,0];
+        FStrain = F_accum;   
+        FStrain_crop_no_edges = FStrain;
         
+    % ======================================
     case 1 % Finite difference method
-        Rad = [1,1,1];
-        %D=funDerivativeOp3((M-2*Rad(1)),(N-2*Rad(2)),(L-2*Rad(3)),DVCpara.winstepsize); % D = sparse(4*(M-2*Rad)*(N-2*Rad), 2*(M-2*Rad)*(N-2*Rad));
-        D2=funDerivativeOp3(MNL(1),MNL(2),MNL(3),DVCpara.winstepsize); 
-        [temp3,temp4] = funFDNeumannBCInd3(size(DVCmesh.coordinatesFEM,1),[M,N,L],Rad); % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
-        temp = D2*ULocal; FStraintemp = FLocal(temp3);
-        FStrain = FLocal; FStrain(temp3) = FStraintemp;
+        strainPlaneFittingHalfWidth = [1,1,1];
+        FDOperator3 = funDerivativeOp3(MNL(1),MNL(2),MNL(3),DVCpara.winstepsize); 
+        [notNeumannBCInd_F,notNeumannBCInd_U] = funFDNeumannBCInd3(size(DVCmesh.coordinatesFEM,1),[M,N,L],strainPlaneFittingHalfWidth); % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
+        F_accum = FDOperator3*U_accum; FStrain_crop_no_edges = F_accum(notNeumannBCInd_F);
+        FStrain = F_accum; FStrain(notNeumannBCInd_F) = FStrain_crop_no_edges;
  
+    % ======================================
     case 2 % Plane fitting method
-        D = funDerivativeOp3(M,N,L,DVCpara.winstepsize); % D = sparse(4*M*N, 2*M*N);
-        FStrain = D*reshape(ULocal,length(ULocal),1); % JY!!! change intrisic coords to world coords
+        FDOperator3 = funDerivativeOp3(MNL(1),MNL(2),MNL(3),DVCpara.winstepsize); % D = sparse(4*M*N, 2*M*N);
+        FStrain = FDOperator3 * reshape(U_accum,length(U_accum),1); % JY!!! change intrisic coords to world coords
         
-        % Compute strain method II: Use Plane Fitting method
-        prompt = 'What is your half window size: ';
-        Rad = input(prompt); if length(Rad)==1, Rad=ones(1,3)*Rad; end
-        
-        [UNew,DUDX,DUDY,DUDZ] = PlaneFit3(reshape(ULocal(1:3:end),M,N,L),DVCpara.winstepsize,Rad,1);
-        [VNew,DVDX,DVDY,DVDZ] = PlaneFit3(reshape(ULocal(2:3:end),M,N,L),DVCpara.winstepsize,Rad,2);
-        [WNew,DWDX,DWDY,DWDZ] = PlaneFit3(reshape(ULocal(3:3:end),M,N,L),DVCpara.winstepsize,Rad,3);
+        % Compute strain method II: Plane Fitting method
+        if isempty(strainPlaneFittingWidth)
+            fprintf('How many data points to use in the plane fitting method? \n');
+            fprintf('Input an odd number for the # of data points in each dimension (e.g. [Nx,Ny,Nz]). \n');
+            prompt = 'Input here: ';
+            strainPlaneFittingWidth = input(prompt); 
+            strainPlaneFittingHalfWidth = (strainPlaneFittingWidth-1)/2;
+            if length(strainPlaneFittingHalfWidth)==1, strainPlaneFittingHalfWidth=ones(1,3)*strainPlaneFittingHalfWidth; end
+        end
+
+        [UNew,DUDX,DUDY,DUDZ] = funPlaneFit3(reshape(U_accum(1:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,1);
+        [VNew,DVDX,DVDY,DVDZ] = funPlaneFit3(reshape(U_accum(2:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,2);
+        [WNew,DWDX,DWDY,DWDZ] = funPlaneFit3(reshape(U_accum(3:3:end),M,N,L),DVCpara.winstepsize,strainPlaneFittingHalfWidth,3);
          
-        FStraintemp = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(1:9:end) = reshape(DUDX((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(2:9:end) = reshape(DVDX((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(3:9:end) = reshape(DWDX((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(4:9:end) = reshape(DUDY((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(5:9:end) = reshape(DVDY((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(6:9:end) = reshape(DWDY((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(7:9:end) = reshape(DUDZ((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(8:9:end) = reshape(DVDZ((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        FStraintemp(9:9:end) = reshape(DWDZ((Rad(1)+1):M-Rad(1),(Rad(2)+1):N-Rad(2),(Rad(3)+1):L-Rad(3)), (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
+        FStrain_crop_no_edges = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        x_ind_crop = (strainPlaneFittingHalfWidth(1)+1):M-strainPlaneFittingHalfWidth(1);  
+        y_ind_crop = (strainPlaneFittingHalfWidth(2)+1):N-strainPlaneFittingHalfWidth(2);  
+        z_ind_crop = (strainPlaneFittingHalfWidth(3)+1):L-strainPlaneFittingHalfWidth(3);
+        xyz_pixels_crop = (M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3));
+
+        FStrain_crop_no_edges(1:9:end) = reshape(DUDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(2:9:end) = reshape(DVDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(3:9:end) = reshape(DWDX(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(4:9:end) = reshape(DUDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(5:9:end) = reshape(DVDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(6:9:end) = reshape(DWDY(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(7:9:end) = reshape(DUDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(8:9:end) = reshape(DVDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
+        FStrain_crop_no_edges(9:9:end) = reshape(DWDZ(x_ind_crop,y_ind_crop,z_ind_crop), xyz_pixels_crop, 1);
           
-        % Find coordinatesFEM that belong to (x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad))
-        temp = 1:1:size(coordinatesFEM,1); temp = temp';
-        temp = reshape(temp,M,N,L); temp2 = temp(Rad(1)+1:M-Rad(1), Rad(2)+1:N-Rad(2), Rad(3)+1:L-Rad(3));
-        temp2 = reshape(temp2, (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
+        % Find coordinatesFEM that belong to "(x_ind_crop,y_ind_crop,z_ind_crop)"
+        nodeInd = 1:1:size(coordinatesFEM,1); nodeInd = nodeInd';
+        nodeInd = reshape(nodeInd,M,N,L); nodeInd_crop_no_edges = nodeInd(x_ind_crop,y_ind_crop,z_ind_crop);
+        nodeInd_crop_no_edges = reshape(nodeInd_crop_no_edges, xyz_pixels_crop, 1);
         
         % Plotstrain0(FStraintemp,x(Rad+1:M-Rad,Rad+1:N-Rad),y(Rad+1:M-Rad,Rad+1:N-Rad),f,g);
-        temp3 = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        for i = 1:(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3))
-            temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
+        notNeumannBCInd_F = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        for i = 1:(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3))
+            notNeumannBCInd_F(9*i-8:9*i) = 9*nodeInd_crop_no_edges(i)*ones(9,1)+[-8:1:0]';
         end
-        FStrain(temp3) = FStraintemp;
-        
+        FStrain(notNeumannBCInd_F) = FStrain_crop_no_edges;
+       
+    % ======================================
     case 3 % Finite element method
-        
-        GaussPtOrder=2; [FStrain,~,~] = funGlobal_NodalStrainAvg3(coordinatesFEM,elementsFEM,ULocal,GaussPtOrder);
+        strainPlaneFittingHalfWidth = [1,1,1];
+        GaussPtOrder=2; [FStrain,~,~] = funGlobal_NodalStrainAvg3(coordinatesFEM,elementsFEM,U_accum,GaussPtOrder);
      
-        Rad = [1,1,1];  
-        temp = 1:1:size(coordinatesFEM,1); temp = temp';
-        temp = reshape(temp,M,N,L); 
-        temp2 = temp(Rad(1)+1:M-Rad(1), Rad(2)+1:N-Rad(2), Rad(3)+1:L-Rad(3));
-        temp2 = reshape(temp2, (M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
+        strainPlaneFittingHalfWidth = [1,1,1]; %Try to remove results near FE-mesh edges 
+        nodeInd = 1:1:size(coordinatesFEM,1); nodeInd = nodeIRemoveOutliersListnd';
+        nodeInd = reshape(nodeInd,M,N,L); 
+        nodeInd_crop_no_edges = nodeInd(strainPlaneFittingHalfWidth(1)+1:M-strainPlaneFittingHalfWidth(1), strainPlaneFittingHalfWidth(2)+1:N-strainPlaneFittingHalfWidth(2), strainPlaneFittingHalfWidth(3)+1:L-strainPlaneFittingHalfWidth(3));
+        nodeInd_crop_no_edges = reshape(nodeInd_crop_no_edges, (M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
         
-        temp3 = zeros(9*(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3)),1);
-        for i = 1:(M-2*Rad(1))*(N-2*Rad(2))*(L-2*Rad(3))
-            temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
+        notNeumannBCInd_F = zeros(9*(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3)),1);
+        for i = 1:(M-2*strainPlaneFittingHalfWidth(1))*(N-2*strainPlaneFittingHalfWidth(2))*(L-2*strainPlaneFittingHalfWidth(3))
+            notNeumannBCInd_F(9*i-8:9*i) = 9*nodeInd_crop_no_edges(i)*ones(9,1)+[-8:1:0]';
         end
-        FStraintemp = FStrain(temp3);
-        
+        FStrain_crop_no_edges = FStrain(notNeumannBCInd_F);
+     
+    % ======================================
     otherwise
+        
         disp('Wrong Input to compute strain field!')
         
 end
- 
+
+DVCpara.strainPlaneFittingHalfWidth = strainPlaneFittingHalfWidth;
 
 %% Update infinitesimal strain to large deformation gradient tensor
-FStrainFinite = FStrain;
-for tempi = 1:9:length(FStrain)
+for tempi = 1:9:length(FStrain)-8
     
-    % Obtain each component of def grad tensor
-    dudx = FStrain(tempi);  dvdx = FStrain(tempi+1); dwdx = FStrain(tempi+2);
-    dudy = FStrain(tempi+3); dvdy = FStrain(tempi+4); dwdy = FStrain(tempi+5);
-    dudz = FStrain(tempi+6); dvdz = FStrain(tempi+7); dwdz = FStrain(tempi+8); 
+    if DVCpara.strainType~=0
+        % Obtain each component of def grad tensor
+        dudx = FStrain(tempi);   dvdx = FStrain(tempi+1); dwdx = FStrain(tempi+2);
+        dudy = FStrain(tempi+3); dvdy = FStrain(tempi+4); dwdy = FStrain(tempi+5);
+        dudz = FStrain(tempi+6); dvdz = FStrain(tempi+7); dwdz = FStrain(tempi+8); 
+
+        FStrainFinite = FStrain; %Initialize variable "FStrainFinite"
+    end
     
-    switch DVCpara.StrainType
+    switch DVCpara.strainType
+        % ======================================
         case 0 % Infinitesimal stran
             % Do nothing
             
-        case 1 % Eluerian strain
-            FStrainFinite(tempi) = 1/(1-dudx)-1; FStrainFinite(tempi+1) = dvdx/(1-dudx); FStrainFinite(tempi+2) = dwdx/(1-dudx);
-            FStrainFinite(tempi+3) = dudy/(1-dvdy); FStrainFinite(tempi+4) = 1/(1-dvdy)-1; FStrainFinite(tempi+5) = dwdy/(1-dvdy);
-            FStrainFinite(tempi+6) = dudz/(1-dwdz); FStrainFinite(tempi+7) = dvdz/(1-dwdz); FStrainFinite(tempi+8) = 1/(1-dwdz)-1; 
+        % ======================================
+        case 1 % Eluerian-Almansi finite strain: e = (I-inv(B))/2; B = F*F';
+            tempFMatrix = [1+dudx, dudy, dudz; dvdx, 1+dvdy, dvdz; dwdx, dwdy, 1+dwdz];
+            tempBMatrix = tempFMatrix * tempFMatrix';
+            tempeMatrix = 0.5*(eye(3)-inv(tempBMatrix));
+
+            FStrainFinite(tempi) = tempeMatrix(1,1);
+            FStrainFinite(tempi+1) = tempeMatrix(2,1);
+            FStrainFinite(tempi+2) = tempeMatrix(3,1);
+            FStrainFinite(tempi+3) = tempeMatrix(1,2);
+            FStrainFinite(tempi+4) = tempeMatrix(2,2);
+            FStrainFinite(tempi+5) = tempeMatrix(3,2);
+            FStrainFinite(tempi+6) = tempeMatrix(1,3);
+            FStrainFinite(tempi+7) = tempeMatrix(2,3);
+            FStrainFinite(tempi+8) = tempeMatrix(3,3);
+
+            % Don't modify this line
+            FStrain_crop_no_edges = FStrainFinite(notNeumannBCInd_F);
+            
+        % ======================================
+        case 2 % Green-Lagrangian finite strain: E=(C-I)/2; C = F'*F;
+            tempFMatrix = [1+dudx, dudy, dudz; dvdx, 1+dvdy, dvdz; dwdx, dwdy, 1+dwdz];
+            tempCMatrix = tempFMatrix' * tempFMatrix;
+            tempEMatrix = 0.5*(tempCMatrix-eye(3));
+            
+            FStrainFinite(tempi) = tempEMatrix(1,1);
+            FStrainFinite(tempi+1) = tempEMatrix(2,1);
+            FStrainFinite(tempi+2) = tempEMatrix(3,1);
+            FStrainFinite(tempi+3) = tempEMatrix(1,2);
+            FStrainFinite(tempi+4) = tempEMatrix(2,2);
+            FStrainFinite(tempi+5) = tempEMatrix(3,2);
+            FStrainFinite(tempi+6) = tempEMatrix(1,3);
+            FStrainFinite(tempi+7) = tempEMatrix(2,3);
+            FStrainFinite(tempi+8) = tempEMatrix(3,3);
              
             % Don't modify this line
-            FStraintemp = FStrainFinite(temp3);
+            FStrain_crop_no_edges = FStrainFinite(notNeumannBCInd_F);
+        
+        % ======================================
+        case 3 % Hencky strain: h = 1/2*ln(B) = sum_{i=1}^{3} (ln lambda_i) n_i \otimes n_i;  B = F*F';
+            tempFMatrix = [1+dudx, dudy, dudz; dvdx, 1+dvdy, dvdz; dwdx, dwdy, 1+dwdz];
+            tempBMatrix = tempFMatrix * tempFMatrix';
+            [tempVMatrix,tempDMatrix] = eig(tempBMatrix);
             
-        case 2 % Green-Lagrangian strain: E=(C-I)/2
-            tempF = [1+dudx, dudy, dudz; dvdx, 1+dvdy, dvdz; dwdx, dwdy, 1+dwdz];
-            tempC = tempF'*tempF;
-            tempE = 0.5*(tempC-eye(3));
-            FStrainFinite(tempi) = tempE(1,1);
-            FStrainFinite(tempi+1) = tempE(2,1);
-            FStrainFinite(tempi+2) = tempE(3,1);
-            FStrainFinite(tempi+3) = tempE(1,2);
-            FStrainFinite(tempi+4) = tempE(2,2);
-            FStrainFinite(tempi+5) = tempE(3,2);
-            FStrainFinite(tempi+6) = tempE(1,3);
-            FStrainFinite(tempi+7) = tempE(2,3);
-            FStrainFinite(tempi+8) = tempE(3,3);
+            tempHMatrix = log(tempDMatrix(1,1)) * tempVMatrix(:,1)*tempVMatrix(:,1)' + ...
+                          log(tempDMatrix(2,2)) * tempVMatrix(:,2)*tempVMatrix(:,2)' + ...
+                          log(tempDMatrix(3,3)) * tempVMatrix(:,3)*tempVMatrix(:,3)';
+        
+            FStrainFinite(tempi) = tempHMatrix(1,1);
+            FStrainFinite(tempi+1) = tempHMatrix(2,1);
+            FStrainFinite(tempi+2) = tempHMatrix(3,1);
+            FStrainFinite(tempi+3) = tempHMatrix(1,2);
+            FStrainFinite(tempi+4) = tempHMatrix(2,2);
+            FStrainFinite(tempi+5) = tempHMatrix(3,2);
+            FStrainFinite(tempi+6) = tempHMatrix(1,3);
+            FStrainFinite(tempi+7) = tempHMatrix(2,3);
+            FStrainFinite(tempi+8) = tempHMatrix(3,3);
              
             % Don't modify this line
-            FStraintemp = FStrainFinite(temp3);
-            
-        case 3 % Principal strains (for infinitesimal strains)
-            tempDU = [dudx, dudy, dudz; dvdx, dvdy, dvdz; dwdx, dwdy, dwdz];
-            tempPrincipalStrain = eig(tempDU);
-            FStrainFinite(tempi) = tempPrincipalStrain(1);
-            FStrainFinite(tempi+1) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
-            FStrainFinite(tempi+2) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+3) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(2));
-            FStrainFinite(tempi+4) = tempPrincipalStrain(2);
-            FStrainFinite(tempi+5) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+6) = 0.5*(tempPrincipalStrain(1)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+7) = 0.5*(tempPrincipalStrain(2)-tempPrincipalStrain(3));
-            FStrainFinite(tempi+8) = tempPrincipalStrain(3);
-            if tempi == 1 % Only print following lines once.
-                disp('Final plotted principal infinitesimal strains are: ');
-                disp('  Subplot(1,1): Principal strain e1');
-                disp('  Subplot(1,2): Principal strain e2');
-                disp('  Subplot(1,3): Principal strain e3');
-                disp('  Subplot(2,1): Max shear (e1-e2)/2');
-                disp('  Subplot(2,2): Max shear (e1-e3)/2');
-                disp('  Subplot(2,3): Max shear (e2-e3)/2');
-                disp('  ');
-                disp('Final saved principal infinitesimal strains are: ');
-                disp('  ResultStrain.Strain(1:9:end) --> e1');
-                disp('  ResultStrain.Strain(2:9:end) --> (e1-e2)/2');
-                disp('  ResultStrain.Strain(3:9:end) --> (e1-e3)/2');
-                disp('  ResultStrain.Strain(4:9:end) --> (e1-e2)/2');
-                disp('  ResultStrain.Strain(5:9:end) --> e2');
-                disp('  ResultStrain.Strain(6:9:end) --> (e2-e3)/2');
-                disp('  ResultStrain.Strain(7:9:end) --> (e1-e3)/2');
-                disp('  ResultStrain.Strain(8:9:end) --> (e2-e3)/2');
-                disp('  ResultStrain.Strain(9:9:end) --> e3');
-                disp('  ');
-            end
+            FStrain_crop_no_edges = FStrainFinite(notNeumannBCInd_F);
+
+        % ======================================
         case 4
-            disp('Press "Ctrl+C" to modify codes by yourself.'); pause;
-            
+            disp('Press "Ctrl + C" to modify codes by yourself.'); pause;
+          
+        % ======================================
         otherwise
-            disp('Wrong strain type!');
+            disp('Unknown strain type!');
     end
 
 end
@@ -163,7 +201,7 @@ end
 
     
 %% Smoothing strain field
-% % Plotstrain(FLocal,x,y,f,g);
+% % Plotstrain(F_accum,x,y,f,g);
 % % for tempi = 1:3, FStrain = funSmoothStrain3(FStrain,coordinatesFEM,elementsFEM,winstepsize,0,0); end
 %     
 % % End of computing strain method I.
@@ -174,9 +212,10 @@ end
 % temp = reshape(temp,M,N,L); temp2 = temp(Rad+1:M-Rad, Rad+1:N-Rad, Rad+1:L-Rad);
 % temp2 = reshape(temp2, (M-2*Rad)*(N-2*Rad)*(L-2*Rad),1);
 % 
-% temp3 = zeros(9*(M-2*Rad)*(N-2*Rad)*(L-2*Rad),1);
+% notNeumannBCInd_F = zeros(9*(M-2*Rad)*(N-2*Rad)*(L-2*Rad),1);
 % for i = 1:(M-2*Rad)*(N-2*Rad)*(L-2*Rad)
-%     temp3(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
+%     notNeumannBCInd_F(9*i-8:9*i) = 9*temp2(i)*ones(9,1)+[-8:1:0]';
 % end
-% FStraintemp = FStrain(temp3);
+% FStraintemp = FStrain(notNeumannBCInd_F);
+
 

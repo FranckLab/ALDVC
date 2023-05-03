@@ -323,11 +323,15 @@ try
         normOfWOld = normOfWNew;
         normOfWNew = norm(b(:));
         
+        
         if stepwithinwhile == 1
             normOfWNewInit = normOfWNew;
         end
         
         normOfWNew = normOfWNew/normOfWNewInit;
+        % normOfWNew
+        % normOfWNew*normOfWNewInit
+        % pause;
           
         if (normOfWNew < tol) || (normOfWNew*normOfWNewInit < 1e-5)
             break
@@ -342,7 +346,8 @@ try
             detDP = 1+DP(5)+(-1).*DP(3).*DP(7)+(-1).*DP(3).*DP(5).*DP(7)+DP(3).*DP(4).*DP(8)+...
                 (-1).*DP(6).*DP(8)+DP(9)+DP(5).*DP(9)+(-1).*DP(2).*(DP(4)+(-1).*DP(6).*DP(7)+DP(4).* ...
                 DP(9))+DP(1).*(1+DP(5)+(-1).*DP(6).*DP(8)+DP(9)+DP(5).*DP(9));
-
+ 
+            
             if (detDP ~= 0)
                 % tempP1 =  (-DeltaP(1)-DeltaP(1)*DeltaP(4)+DeltaP(2)*DeltaP(3))/temp;
                 % tempP2 =  -DeltaP(2)/temp;
@@ -380,7 +385,7 @@ try
             
 %             [1+P(1) P(4) P(7) P(10); P(2) 1+P(5) P(8) P(11); P(3) P(6) 1+P(9) P(12); 0 0 0 1]  ...
 %                     *inv([1+DP(1), DP(4), DP(7) DP(10); DP(2), 1+DP(5), DP(8) DP(11); DP(3), DP(6), 1+DP(9) DP(12); 0,0,0,1]);
-
+% 
                 % P1 = tempMatrix(1,1)-1;
                 % P2 = tempMatrix(2,1);
                 % P3 = tempMatrix(1,2);

@@ -39,7 +39,7 @@ for k = 1:L-1
 end
 
 
-%% mesh for local method
+%% DVC mesh for local method
 % N is vertically in image; M is horizontally in image;
 
 % coordinates = zeros((M+1)*(N+1)*(L+1),3);
