@@ -26,7 +26,7 @@ fprintf('------------ Section 1 Done ------------ \n \n')
 fprintf('------------ Section 2 Start ------------ \n')
 
 % ====== Pre-load images ======
-fileName = 'TensionTime*.mat';  fileFolder = './DVC_images/vol_tension_device/'; %Change "filename" and "fileFolder" by yourself
+fileName = 'vol_stretch*.mat';  fileFolder = './DVC_images/'; %Change "filename" and "fileFolder" by yourself
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
         cd(fileFolder); %Open "fileFolder" if it is a valid path
@@ -39,7 +39,7 @@ end; catch; end %Skip this step if "fileFolder" is not a valid path
 %%%%%%% which will require a large RAM space: 
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd('../'); %Return to previous parent path if "cd(fileFolder);" was executed before
 end; catch; end %Skip this step if "fileFolder" is not a valid path 
 
 % ====== Define DVC parameters ======
@@ -125,7 +125,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     % -----------------------------
 
     try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd('../'); %Return to previous parent path if "cd(fileFolder);" was executed before
     end; catch; end %Skip this step if "fileFolder" is not a valid path 
  
 
