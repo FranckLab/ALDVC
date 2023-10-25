@@ -35,5 +35,13 @@ Welcome to give us ratings and make comments at: [![View Augmented Lagrangian Di
   <img width="538" height="301" src="https://github.com/FranckLab/ALDVC/blob/master/aldvc_logo.png">
 </p>
 
+<p align="center">
+  <img width="538" height="301" src="https://github.com/FranckLab/ALDVC/blob/master/DVC_images/example_ALDVC_gel.jpg">
+</p>
+ 
+<p align="center">
+  <img width="538" height="301" src="https://github.com/FranckLab/ALDVC/blob/master/DVC_images/example_ALDVC_composites.gif">
+</p>
+
 
 
