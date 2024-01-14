@@ -26,7 +26,8 @@ fprintf('------------ Section 1 Done ------------ \n \n')
 fprintf('------------ Section 2 Start ------------ \n')
 
 % ====== Pre-load images ======
-fileName = 'TensionTime*.mat';  fileFolder = './DVC_images/vol_tension_device/'; %Change "filename" and "fileFolder" by yourself
+fileName = 'vol_Sample14*.mat';  fileFolder = './DVC_images/'; %Change "filename" and "fileFolder" by yourself
+currentFolder = pwd;
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
         cd(fileFolder); %Open "fileFolder" if it is a valid path
@@ -39,7 +40,7 @@ end; catch; end %Skip this step if "fileFolder" is not a valid path
 %%%%%%% which will require a large RAM space: 
 
 try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd(currentFolder); %Return to previous parent path if "cd(fileFolder);" was executed before
 end; catch; end %Skip this step if "fileFolder" is not a valid path 
 
 % ====== Define DVC parameters ======
@@ -59,7 +60,7 @@ DVCpara.ADMMtol = 1e-2;               %ADMM stopping threshold, unit: [voxel]
 clear Img; %Clear original variable "Img" to release RAM
 
 % ====== Initialize variable storage ======
-ImgSeqLength = length(fileNameAll);           %Define variable "ImgSeqLength" as total frame #
+ImgSeqLength = length(fileNameAll);             %Define variable "ImgSeqLength" as total frame #
 ResultDisp = cell(ImgSeqLength-1,1);            %To store solved displacements [U]
 ResultDefGrad = cell(ImgSeqLength-1,1);         %To store solved deformation gradients [F]
 ResultStrain = cell(ImgSeqLength-1,1);          %To store solved strain after Section 8
@@ -125,7 +126,7 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     % -----------------------------
 
     try if isempty(fileFolder)~=1 %Check whether "fileFolder" exists
-        cd('../../'); %Return to previous parent path if "cd(fileFolder);" was executed before
+        cd('../'); %Return to previous parent path if "cd(fileFolder);" was executed before
     end; catch; end %Skip this step if "fileFolder" is not a valid path 
  
 
@@ -234,14 +235,14 @@ for ImgSeqNum = 2 : length(fileNameAll) %ImgSeqNum: index of frame in the image 
     uvw.v = reshape(USubpb1(2:3:end),MNL); uvw.w = reshape(USubpb1(3:3:end),MNL); 
 
     [uvw,cc,RemoveOutliersList] = RemoveOutliers3(uvw,[],DVCpara.qDICOrNot,DVCpara.medianFilterThreshold,DVCpara.uvwUpperAndLowerBounds);
- 
+
     USubpb1 = [uvw.u(:),uvw.v(:),uvw.w(:)]'; USubpb1 = USubpb1(:); FSubpb1 = FSubpb1(:);
     for tempi = 0:8
         FSubpb1(9*RemoveOutliersList-tempi) = nan;
         FSubpb1(9-tempi:9:end) = reshape((inpaint_nans3(reshape(FSubpb1(9-tempi:9:end),MNL),1)),size(DVCmesh.coordinatesFEM,1),1);
     end
     disp('--- Remove bad points: Done. ---')
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % ------ Plot & save variables ------
     close all; Plotdisp3(USubpb1,DVCmesh.coordinatesFEM);  %Plot displacement fields
@@ -698,7 +699,7 @@ if strcmp(DVCpara.trackingMode,'incremental')==1
     close(hbar); %Close the waitbar
  
 close all;
-for ImgSeqNum = 30 %Feel free to change image frame #
+for ImgSeqNum = 2 %Feel free to change image frame #
     Plotdisp3(ResultDisp{ImgSeqNum-1}.U_accum, ...
         ResultFEMeshEachFrame{ImgSeqNum-1}.coordinatesFEM);
 end
