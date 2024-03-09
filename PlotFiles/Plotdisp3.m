@@ -170,7 +170,7 @@ else %%%%%% Plot all figures on the same page
     hold on, subplot(2,3,3),
     pdeplot3D(dvcVOI,'ColorMapData',U(3:3:end),'FaceAlpha',1.0);
     hold on, pdegplot(dvcVOI,'FaceLabel','off','FaceAlpha',0.3);
-    title('$z-$displacement $v$','FontWeight','Normal','Interpreter','latex');
+    title('$z-$displacement $w$','FontWeight','Normal','Interpreter','latex');
     set(gca,'fontsize',18); axis on; axis equal; set(gcf,'color','w'); 
 
     try colormap(colorMap); catch; end
